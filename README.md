@@ -64,7 +64,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 | Serviço | Versão | Porta | Descrição |
 |---------|--------|-------|-----------|
 | **Grafana** | latest | 3000 | Dashboards e visualização de dados |
-| **N8N** | 1.0.5 | 5678 | Automação de workflows e integrações |
+| **N8N** | latest | 5678 | Automação de workflows e integrações |
 | **Vaultwarden** | latest | 80 | Gerenciador de senhas (Bitwarden) |
 | **Portainer** | latest | 9000 | Interface de gerenciamento Docker |
 | **Zabbix** | 7.0-alpine | 8080 | Monitoramento de infraestrutura |
