@@ -1,0 +1,60 @@
+---
+services:
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    environment:
+      TUNNEL_TOKEN_FILE: /run/secrets/tunnel_token
+    networks:
+      - proxy-network
+      - local-network
+    secrets:
+      - tunnel_token
+    healthcheck:
+      test:
+        - CMD
+        - cloudflared
+        - "--help"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command: tunnel run
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.labels.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+
+networks:
+  proxy-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+  local-network:
+    external: true
+
+secrets:
+  tunnel_token:
+    file: ./cloudflared_tunnel_token.txt

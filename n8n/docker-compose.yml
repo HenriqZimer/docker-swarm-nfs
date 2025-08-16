@@ -1,0 +1,238 @@
+---
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data:rw
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      - TZ=America/Sao_Paulo
+    networks:
+      - automation-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U n8n -d n8n
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command: |
+      postgres -c listen_addresses=* -c shared_buffers=256MB -c effective_cache_size=512MB -c max_connections=100 -c wal_buffers=16MB -c checkpoint_completion_target=0.9 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c log_statement=all -c log_duration=on -c log_min_duration_statement=1000
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    secrets:
+      - db_password
+  app:
+    image: n8nio/n8n:latest
+    volumes:
+      - app_data:/home/node/.n8n
+    environment:
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
+      - N8N_HOST_FILE=/run/secrets/host
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_USER_MANAGEMENT_DISABLED=false
+      - N8N_EMAIL_MODE=smtp
+      - N8N_SMTP_HOST_FILE=/run/secrets/smtp_host
+      - N8N_SMTP_PORT=587
+      - N8N_SMTP_USER_FILE=/run/secrets/smtp_username
+      - N8N_SMTP_PASS_FILE=/run/secrets/smtp_password
+      - N8N_SMTP_SENDER_FILE=/run/secrets/smtp_sender
+      - N8N_SMTP_SSL=false
+      - N8N_SMTP_STARTTLS=true
+      - N8N_SMTP_IGNORE_TLS=false
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL_FILE=/run/secrets/webhook_url
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=all
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
+      - EXECUTIONS_DATA_SAVE_ON_PROGRESS=false
+      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=true
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=336
+      - N8N_METRICS=true
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_LOG_OUTPUT=console
+      - N8N_LOG_LEVEL=info
+      - N8N_LOG_FILE_COUNT_MAX=10
+      - N8N_LOG_FILE_SIZE_MAX=16
+      - NODE_OPTIONS=--max-old-space-size=2048
+      - N8N_SECURE_COOKIE=true
+      - N8N_CONCURRENCY_PRODUCTION_LIMIT=10
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_POSTGRESDB_POOL_SIZE=10
+      - DB_POSTGRESDB_SSL_ENABLED=false
+      - N8N_DEFAULT_BINARY_DATA_MODE=filesystem
+      - N8N_BINARY_DATA_STORAGE_PATH=/home/node/.n8n/binaryData
+      - N8N_ADDITIONAL_TRUSTED_DOMAINS_FILE=/run/secrets/trusted_domains
+      - N8N_CORS_ORIGIN=*
+      - N8N_DISABLE_PRODUCTION_MAIN_PROCESS=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=true
+      - WORKFLOWS_DEFAULT_NAME=Workflow
+      - N8N_ONBOARDING_FLOW_DISABLED=true
+    networks:
+      - automation-network
+      - local-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    secrets:
+      - encryption_key
+      - db_password
+      - webhook_url
+      - host
+      - smtp_host
+      - smtp_username
+      - smtp_password
+      - smtp_sender
+      - trusted_domains
+  worker:
+    image: n8nio/n8n:latest
+    depends_on:
+      - db
+      - cache
+    volumes:
+      - app_data:/home/node/.n8n
+    environment:
+      - N8N_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - N8N_LOG_OUTPUT=console
+      - N8N_LOG_LEVEL=info
+      - NODE_OPTIONS=--max-old-space-size=2048
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD_FILE=/run/secrets/db_password
+      - N8N_CONCURRENCY_PRODUCTION_LIMIT=5
+    networks:
+      - automation-network
+    command: n8n worker
+    deploy:
+      replicas: 0
+      placement:
+        constraints:
+          - node.labels.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    secrets:
+      - encryption_key
+      - db_password
+
+volumes:
+  app_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/n8n/app'
+  db_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/n8n/db'
+
+networks:
+  automation-network:
+    driver: overlay
+    driver_opts:
+      encrypted: 'true'
+    attachable: true
+  local-network:
+    external: true
+
+secrets:
+  encryption_key:
+    file: ./n8n_encryption_key.txt
+  db_password:
+    file: ./n8n_db_password.txt
+  webhook_url:
+    file: ./n8n_webhook_url.txt
+  host:
+    file: ./n8n_host.txt
+  smtp_host:
+    file: ./n8n_smtp_host.txt
+  smtp_username:
+    file: ./n8n_smtp_username.txt
+  smtp_password:
+    file: ./n8n_smtp_password.txt
+  smtp_sender:
+    file: ./n8n_smtp_sender.txt
+  trusted_domains:
+    file: ./n8n_trusted_domains.txt

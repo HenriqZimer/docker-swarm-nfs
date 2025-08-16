@@ -1,0 +1,206 @@
+---
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data:rw
+    environment:
+      - POSTGRES_DB=vaultwarden
+      - POSTGRES_USER=vaultwarden
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=America/Sao_Paulo
+    networks:
+      - management-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U vaultwarden -d vaultwarden
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command: |
+      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    secrets:
+      - db_password
+  app:
+    image: vaultwarden/server:latest
+    volumes:
+      - app_data:/data:rw
+    environment:
+      - SIGNUPS_ALLOWED=false
+      - INVITATIONS_ALLOWED=true
+      - DOMAIN_FILE=/run/secrets/domain
+      - SENDS_ALLOWED=true
+      - EMERGENCY_ACCESS_ALLOWED=true
+      - WEB_VAULT_ENABLED=true
+      - SHOW_PASSWORD_HINT=false
+      - PASSWORD_HINTS_ALLOWED=false
+      - PASSWORD_ITERATIONS=600000
+      - LOGIN_RATELIMIT_SECONDS=60
+      - LOGIN_RATELIMIT_MAX_BURST=10
+      - ADMIN_RATELIMIT_SECONDS=300
+      - ADMIN_RATELIMIT_MAX_BURST=3
+      - REQUIRE_DEVICE_EMAIL=true
+      - DISABLE_2FA_REMEMBER=false
+      - INCOMPLETE_2FA_TIME_LIMIT=3
+      - EMAIL_TOKEN_SIZE=6
+      - EMAIL_EXPIRATION_TIME=600
+      - EMAIL_ATTEMPTS_LIMIT=3
+      - ROCKET_WORKERS=10
+      - DATABASE_MAX_CONNS=10
+      - DATABASE_TIMEOUT=30
+      - ENABLE_DB_WAL=true
+      - LOG_LEVEL=warn
+      - LOG_FILE=/data/vaultwarden.log
+      - EXTENDED_LOGGING=true
+      - LOG_TIMESTAMP_FORMAT="%Y-%m-%d %H:%M:%S.%3f"
+      - ICON_CACHE_TTL=2592000
+      - ICON_CACHE_NEGTTL=259200
+      - DISABLE_ICON_DOWNLOAD=false
+      - ICON_DOWNLOAD_TIMEOUT=10
+      - HTTP_REQUEST_BLOCK_NON_GLOBAL_IPS=true
+      - IP_HEADER=X-Real-IP
+      - SMTP_TIMEOUT=15
+      - SMTP_PORT=587
+      - SMTP_SECURITY=starttls
+      - SMTP_HOST_FILE=/run/secrets/smtp_host
+      - SMTP_FROM_FILE=/run/secrets/smtp_email
+      - SMTP_FROM_NAME_FILE=/run/secrets/smtp_username
+      - SMTP_USERNAME_FILE=/run/secrets/smtp_email
+      - SMTP_PASSWORD_FILE=/run/secrets/smtp_password
+      - SMTP_EMBED_IMAGES=true
+      - ADMIN_TOKEN_FILE=/run/secrets/admin_token
+      - DISABLE_ADMIN_TOKEN=false
+      - ADMIN_SESSION_LIFETIME=20
+      - USER_ATTACHMENT_LIMIT=102400
+      - ORG_ATTACHMENT_LIMIT=1048576
+      - USER_SEND_LIMIT=51200
+      - TRASH_AUTO_DELETE_DAYS=30
+      - EVENTS_DAYS_RETAIN=365
+      - ORG_EVENTS_ENABLED=true
+      - JOB_POLL_INTERVAL_MS=30000
+      - SEND_PURGE_SCHEDULE=0 5 * * * *
+      - TRASH_PURGE_SCHEDULE=0 5 0 * * *
+      - EVENT_CLEANUP_SCHEDULE=0 10 0 * * *
+      - INCOMPLETE_2FA_SCHEDULE=30 * * * * *
+      - EMERGENCY_NOTIFICATION_REMINDER_SCHEDULE=0 3 * * * *
+      - DATABASE_URL_FILE=/run/secrets/database_url
+      - TZ=America/Sao_Paulo
+    networks:
+      - management-network
+      - local-network
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - '-f'
+        - http://localhost:80/alive
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == worker
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: stop-first
+    secrets:
+      - admin_token
+      - smtp_host
+      - smtp_email
+      - smtp_username
+      - smtp_password
+      - domain
+      - db_password
+      - database_url
+
+volumes:
+  app_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/vaultwarden/app'
+  db_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/vaultwarden/db'
+
+networks:
+  management-network:
+    driver: overlay
+    driver_opts:
+      encrypted: 'true'
+    attachable: true
+  local-network:
+    external: true
+
+secrets:
+  admin_token:
+    file: ./vaultwarden_admin_token.txt
+  smtp_host:
+    file: ./vaultwarden_smtp_host.txt
+  smtp_email:
+    file: ./vaultwarden_smtp_email.txt
+  smtp_username:
+    file: ./vaultwarden_smtp_username.txt
+  smtp_password:
+    file: ./vaultwarden_smtp_password.txt
+  domain:
+    file: ./vaultwarden_domain.txt
+  db_password:
+    file: ./vaultwarden_db_password.txt
+  database_url:
+    file: ./vaultwarden_database_url.txt

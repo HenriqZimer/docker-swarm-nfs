@@ -1,0 +1,216 @@
+---
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: grafana
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: America/Sao_Paulo
+    networks:
+      - monitoring-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U grafana -d grafana
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    command: |
+      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    secrets:
+      - db_password
+  app:
+    image: grafana/grafana:latest
+    volumes:
+      - app_data:/var/lib/grafana
+    environment:
+      TZ: America/Sao_Paulo
+      GF_PLUGINS_PREINSTALL: alexanderzobnin-zabbix-app
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: db:5432
+      GF_DATABASE_NAME: grafana
+      GF_DATABASE_USER: grafana
+      GF_DATABASE_PASSWORD__FILE: /run/secrets/db_password
+      GF_DATABASE_SSL_MODE: disable
+      GF_SECURITY_ADMIN_USER: Admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/admin_password
+      GF_SECURITY_SECRET_KEY__FILE: /run/secrets/secret_key
+      GF_DATABASE_MAX_OPEN_CONN: 50
+      GF_DATABASE_MAX_IDLE_CONN: 10
+      GF_DATABASE_CONN_MAX_LIFETIME: 14400
+      GF_DATABASE_CONN_MAX_IDLE_TIME: 600
+      GF_SECURITY_DISABLE_GRAVATAR: 'true'
+      GF_SECURITY_COOKIE_SECURE: 'true'
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_SECURITY_STRICT_TRANSPORT_SECURITY: 'true'
+      GF_SECURITY_STRICT_TRANSPORT_SECURITY_MAX_AGE_SECONDS: '31536000'
+      GF_SECURITY_X_CONTENT_TYPE_OPTIONS: 'true'
+      GF_SECURITY_X_XSS_PROTECTION: 'true'
+      GF_SECURITY_CONTENT_SECURITY_POLICY: 'true'
+      GF_SECURITY_DISABLE_BRUTE_FORCE_LOGIN_PROTECTION: 'false'
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_USERS_ALLOW_ORG_CREATE: 'false'
+      GF_USERS_AUTO_ASSIGN_ORG: 'true'
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: dark
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: 'false'
+      GF_SERVER_HTTP_PORT: 3000
+      GF_SERVER_DOMAIN__FILE: /run/secrets/domain
+      GF_SERVER_ROOT_URL__FILE: /run/secrets/domain_url
+      GF_SERVER_SERVE_FROM_SUB_PATH: 'false'
+      GF_SERVER_ENABLE_GZIP: 'true'
+      GF_LOG_MODE: console
+      GF_LOG_LEVEL: info
+      GF_LOG_FILTERS: ldap:debug
+      GF_METRICS_ENABLED: 'true'
+      GF_METRICS_INTERVAL_SECONDS: '10'
+      GF_AUTH_LOGIN_MAXIMUM_INACTIVE_LIFETIME_DURATION: 7d
+      GF_AUTH_LOGIN_MAXIMUM_LIFETIME_DURATION: 30d
+      GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES: 10
+      GF_SMTP_ENABLED: 'true'
+      GF_SMTP_HOST__FILE: /run/secrets/smtp_host
+      GF_SMTP_USER__FILE: /run/secrets/smtp_email
+      GF_SMTP_PASSWORD__FILE: /run/secrets/smtp_password
+      GF_SMTP_FROM_ADDRESS__FILE: /run/secrets/smtp_email
+      GF_SMTP_FROM_NAME__FILE: /run/secrets/smtp_username
+      GF_SMTP_EHLO_IDENTITY__FILE: /run/secrets/domain
+      GF_SMTP_STARTTLS_POLICY: MandatoryStartTLS
+      GF_SMTP_SKIP_VERIFY: 'false'
+      GF_SMTP_CERT_FILE: ''
+      GF_SMTP_KEY_FILE: ''
+      GF_QUOTA_ENABLED: 'true'
+      GF_QUOTA_ORG_USER: '100'
+      GF_QUOTA_ORG_DASHBOARD: '1000'
+      GF_QUOTA_ORG_DATA_SOURCE: '50'
+      GF_QUOTA_ORG_API_KEY: '10'
+      GF_QUOTA_ORG_ALERT_RULE: '200'
+      GF_UNIFIED_ALERTING_ENABLED: 'true'
+      GF_UNIFIED_ALERTING_EXECUTE_ALERTS: 'true'
+      GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT: 30s
+      GF_UNIFIED_ALERTING_MAX_ATTEMPTS: '3'
+      GF_PLUGINS_ENABLE_ALPHA: 'false'
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: grafana-pyroscope-app
+    networks:
+      - monitoring-network
+      - local-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:3000/api/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    secrets:
+      - db_password
+      - admin_password
+      - secret_key
+      - smtp_host
+      - smtp_username
+      - smtp_password
+      - smtp_email
+      - domain
+      - domain_url
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/grafana/db'
+  app_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.1.105,nfsvers=4,rw
+      device: ':/mnt/slowbro/docker/grafana/app'
+
+networks:
+  monitoring-network:
+    driver: overlay
+    driver_opts:
+      encrypted: 'true'
+    attachable: true
+  local-network:
+    external: true
+
+secrets:
+  db_password:
+    file: ./grafana_db_password.txt
+  admin_password:
+    file: ./grafana_admin_password.txt
+  secret_key:
+    file: ./grafana_secret_key.txt
+  smtp_host:
+    file: ./grafana_smtp_host.txt
+  smtp_username:
+    file: ./grafana_smtp_username.txt
+  smtp_password:
+    file: ./grafana_smtp_password.txt
+  smtp_email:
+    file: ./grafana_smtp_email.txt
+  domain:
+    file: ./grafana_domain.txt
+  domain_url:
+    file: ./grafana_domain_url.txt
