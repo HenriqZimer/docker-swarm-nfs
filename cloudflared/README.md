@@ -79,20 +79,6 @@ vault.empresa.com.br -> http://vaultwarden:80
 zabbix.empresa.com.br -> http://zabbix_web:8080
 ```
 
-## 🌐 Configuração de DNS
-
-### Registros CNAME necessários
-```dns
-# No painel do Cloudflare > DNS > Records
-grafana.empresa.com.br     CNAME   tunnel-id.cfargotunnel.com
-n8n.empresa.com.br         CNAME   tunnel-id.cfargotunnel.com
-portainer.empresa.com.br   CNAME   tunnel-id.cfargotunnel.com
-vault.empresa.com.br       CNAME   tunnel-id.cfargotunnel.com
-zabbix.empresa.com.br      CNAME   tunnel-id.cfargotunnel.com
-```
-
-**Nota**: O `tunnel-id` será fornecido automaticamente quando você criar o tunnel.
-
 ## 🚀 Comandos Úteis
 
 ```bash
@@ -122,7 +108,7 @@ docker exec cloudflared_tunnel cloudflared tunnel info
 # 1. Zero Trust > Access > Tunnels
 # 2. Create a tunnel
 # 3. Connector: Cloudflared
-# 4. Name: docker-swarm-tunnel
+# 4. Name: docker-swarm
 # 5. Save tunnel
 ```
 
@@ -131,7 +117,7 @@ docker exec cloudflared_tunnel cloudflared tunnel info
 # Para cada serviço:
 # Public hostname: grafana.empresa.com.br
 # Service: HTTP
-# URL: http://grafana:3000
+# URL: http://grafana_app:3000
 ```
 
 ### Exemplo completo de configuração:
@@ -152,29 +138,6 @@ docker exec cloudflared_tunnel cloudflared tunnel info
 # Add application > Self-hosted
 # Application domain: grafana.empresa.com.br
 # Policy: Define quem pode acessar
-```
-
-### Políticas de Acesso
-```json
-{
-  "name": "Admin Access",
-  "action": "allow",
-  "rules": [
-    {
-      "emails": ["admin@empresa.com.br"],
-      "country": ["BR"],
-      "ip": ["192.168.1.0/24"]
-    }
-  ]
-}
-```
-
-### WAF (Web Application Firewall)
-```bash
-# Security > WAF
-# Rate limiting: 100 req/min por IP
-# Bot fight mode: On
-# DDoS protection: Auto
 ```
 
 ## 📊 Monitoramento e Analytics
@@ -202,35 +165,6 @@ curl -H "CF-Access-Client-Id: [id]" \
      https://grafana.empresa.com.br/api/health
 ```
 
-## 🔧 Configurações Avançadas
-
-### Load Balancing
-```bash
-# Traffic > Load Balancing
-# Create Load Balancer
-# Origin pools: Múltiplos servidores
-# Health checks: Monitoramento automático
-```
-
-### Page Rules
-```bash
-# Rules > Page Rules
-# Cache Level: Cache Everything (para assets)
-# SSL: Full (Strict)
-# Always Use HTTPS: On
-```
-
-### Custom Error Pages
-```html
-<!-- Para manutenção -->
-<html>
-<body>
-  <h1>Serviço em Manutenção</h1>
-  <p>Voltaremos em breve!</p>
-</body>
-</html>
-```
-
 ## 🚨 Troubleshooting
 
 ### Problemas Comuns
@@ -250,85 +184,11 @@ docker service logs cloudflared_tunnel
 **Erro 522 (Connection Timed Out)**:
 ```bash
 # Verificar serviço local
-curl -I http://grafana:3000
+curl -I http://grafana_app:3000
 
 # Verificar rede Docker
 docker network ls
 docker network inspect docker-swarm_default
-```
-
-**Erro 525 (SSL Handshake Failed)**:
-```bash
-# Ajustar SSL/TLS settings
-# Cloudflare > SSL/TLS > Overview
-# Encryption mode: Full
-```
-
-**Origin IP Exposure**:
-```bash
-# Verificar se IP público está exposto
-# Security > Settings
-# Hide origin IP: On
-```
-
-### Comandos de Diagnóstico
-```bash
-# Status do tunnel
-cloudflared tunnel info [tunnel-name]
-
-# Teste de conectividade
-cloudflared tunnel route ip show
-
-# Verificar configuração
-cloudflared tunnel config [tunnel-name]
-
-# Logs detalhados
-docker service logs --details cloudflared_tunnel
-```
-
-## 🔒 Backup e Disaster Recovery
-
-### Backup da Configuração
-```bash
-# Exportar configuração do tunnel
-cloudflared tunnel config docker-swarm-tunnel > tunnel-config.json
-
-# Backup do token (já está no .env)
-grep CLOUDFLARED .env > cloudflared-backup.txt
-```
-
-### Disaster Recovery
-```bash
-# 1. Recriar tunnel com mesmo nome
-# 2. Aplicar token salvo
-# 3. Reconfigurar DNS records
-# 4. Testar conectividade
-```
-
-## 📈 Performance e Otimização
-
-### Otimizações Cloudflare
-```bash
-# Speed > Optimization
-# Auto Minify: JS, CSS, HTML
-# Rocket Loader: On
-# Mirage: On (para imagens)
-# Polish: Lossless
-```
-
-### Caching Strategy
-```bash
-# Caching > Configuration
-# Caching Level: Standard
-# Browser Cache TTL: 4 hours
-# Always Online: On
-```
-
-### Compression
-```bash
-# Network > Compression
-# Brotli: On
-# Gzip: On (fallback)
 ```
 
 ## 📚 Links Úteis
