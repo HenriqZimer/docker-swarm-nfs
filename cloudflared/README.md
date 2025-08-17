@@ -137,11 +137,11 @@ docker exec cloudflared_tunnel cloudflared tunnel info
 ### Exemplo completo de configuração:
 | Subdomain | Service Type | URL |
 |-----------|--------------|-----|
-| grafana.empresa.com.br | HTTP | http://grafana:3000 |
+| grafana.empresa.com.br | HTTP | http://grafana_app:3000 |
 | n8n.empresa.com.br | HTTP | http://n8n_app:5678 |
-| portainer.empresa.com.br | HTTPS | https://portainer:9443 |
-| vault.empresa.com.br | HTTP | http://vaultwarden:80 |
-| zabbix.empresa.com.br | HTTP | http://zabbix_web:8080 |
+| portainer.empresa.com.br | HTTP | http://portainer_app:9000 |
+| vault.empresa.com.br | HTTP | http://vaultwarden_app:80 |
+| zabbix.empresa.com.br | HTTP | http://zabbix_app:8080 |
 
 ## 🛡️ Segurança e Zero Trust
 

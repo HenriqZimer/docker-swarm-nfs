@@ -24,7 +24,7 @@ services:
       replicas: 2
       placement:
         constraints:
-          - node.labels.role == manager
+          - node.labels.role == worker
       restart_policy:
         condition: on-failure
         delay: 10s
