@@ -43,10 +43,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     secrets:
       - db_password
@@ -135,10 +135,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '4.0'
+          cpus: "4.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
     secrets:
       - encryption_key
@@ -185,10 +185,10 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
     secrets:
       - encryption_key
@@ -200,19 +200,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/n8n/app'
+      device: ":/mnt/slowbro/docker/n8n/app"
   db_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/n8n/db'
+      device: ":/mnt/slowbro/docker/n8n/db"
 
 networks:
   automation-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   local-network:
     external: true

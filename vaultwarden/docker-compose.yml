@@ -43,10 +43,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
     secrets:
       - db_password
@@ -121,7 +121,7 @@ services:
       test:
         - CMD
         - curl
-        - '-f'
+        - "-f"
         - http://localhost:80/alive
       interval: 30s
       timeout: 10s
@@ -136,10 +136,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -170,19 +170,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/vaultwarden/app'
+      device: ":/mnt/slowbro/docker/vaultwarden/app"
   db_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/vaultwarden/db'
+      device: ":/mnt/slowbro/docker/vaultwarden/db"
 
 networks:
   management-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   local-network:
     external: true
