@@ -4,12 +4,16 @@ services:
     image: postgres:16-alpine
     volumes:
       - db_data:/var/lib/postgresql/data:rw
+    command: |
+      postgres -c listen_addresses=* -c shared_buffers=256MB -c effective_cache_size=512MB -c max_connections=100 -c wal_buffers=16MB -c checkpoint_completion_target=0.9 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c log_statement=all -c log_duration=on -c log_min_duration_statement=1000
     environment:
       - POSTGRES_DB=n8n
       - POSTGRES_USER=n8n
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
       - TZ=America/Sao_Paulo
+    secrets:
+      - db_password
     networks:
       - automation-network
     healthcheck:
@@ -20,14 +24,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
-    command: |
-      postgres -c listen_addresses=* -c shared_buffers=256MB -c effective_cache_size=512MB -c max_connections=100 -c wal_buffers=16MB -c checkpoint_completion_target=0.9 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c log_statement=all -c log_duration=on -c log_min_duration_statement=1000
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints:
-          - node.labels.role == manager
+          - node.role == manager
       restart_policy:
         condition: on-failure
         delay: 10s
@@ -43,13 +45,12 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 512M
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
-    secrets:
-      - db_password
+
   app:
     image: n8nio/n8n:latest
     volumes:
@@ -104,6 +105,16 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=true
       - WORKFLOWS_DEFAULT_NAME=Workflow
       - N8N_ONBOARDING_FLOW_DISABLED=true
+    secrets:
+      - encryption_key
+      - db_password
+      - webhook_url
+      - host
+      - smtp_host
+      - smtp_username
+      - smtp_password
+      - smtp_sender
+      - trusted_domains
     networks:
       - automation-network
       - local-network
@@ -119,7 +130,7 @@ services:
       replicas: 1
       placement:
         constraints:
-          - node.labels.role == worker
+          - node.role == worker
       restart_policy:
         condition: on-failure
         delay: 10s
@@ -135,21 +146,12 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "4.0"
+          cpus: '4.0'
           memory: 4G
         reservations:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 2G
-    secrets:
-      - encryption_key
-      - db_password
-      - webhook_url
-      - host
-      - smtp_host
-      - smtp_username
-      - smtp_password
-      - smtp_sender
-      - trusted_domains
+
   worker:
     image: n8nio/n8n:latest
     depends_on:
@@ -157,6 +159,7 @@ services:
       - cache
     volumes:
       - app_data:/home/node/.n8n
+    command: n8n worker
     environment:
       - N8N_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
       - GENERIC_TIMEZONE=America/Sao_Paulo
@@ -170,9 +173,11 @@ services:
       - DB_POSTGRESDB_USER=n8n
       - DB_POSTGRESDB_PASSWORD_FILE=/run/secrets/db_password
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=5
+    secrets:
+      - encryption_key
+      - db_password
     networks:
       - automation-network
-    command: n8n worker
     deploy:
       replicas: 0
       placement:
@@ -185,14 +190,11 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: "2.0"
+          cpus: '2.0'
           memory: 2G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 1G
-    secrets:
-      - encryption_key
-      - db_password
 
 volumes:
   app_data:
@@ -200,19 +202,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/n8n/app"
+      device: ':/mnt/slowbro/docker/n8n/app'
   db_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=192.168.1.105,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/n8n/db"
+      device: ':/mnt/slowbro/docker/n8n/db'
 
 networks:
   automation-network:
     driver: overlay
     driver_opts:
-      encrypted: "true"
+      encrypted: 'true'
     attachable: true
   local-network:
     external: true

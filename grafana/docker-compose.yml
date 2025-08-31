@@ -4,12 +4,16 @@ services:
     image: postgres:16-alpine
     volumes:
       - db_data:/var/lib/postgresql/data
+    command: |
+      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
     environment:
       POSTGRES_DB: grafana
       POSTGRES_USER: grafana
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
       PGDATA: /var/lib/postgresql/data/pgdata
       TZ: America/Sao_Paulo
+    secrets:
+      - db_password
     networks:
       - monitoring-network
     healthcheck:
@@ -20,14 +24,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
-    command: |
-      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints:
-          - node.labels.role == manager
+          - node.role == manager
       restart_policy:
         condition: on-failure
         delay: 10s
@@ -48,8 +50,7 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
-    secrets:
-      - db_password
+
   app:
     image: grafana/grafana:latest
     volumes:
@@ -124,6 +125,16 @@ services:
       GF_UNIFIED_ALERTING_MAX_ATTEMPTS: '3'
       GF_PLUGINS_ENABLE_ALPHA: 'false'
       GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: grafana-pyroscope-app
+    secrets:
+      - db_password
+      - admin_password
+      - secret_key
+      - smtp_host
+      - smtp_username
+      - smtp_password
+      - smtp_email
+      - domain
+      - domain_url
     networks:
       - monitoring-network
       - local-network
@@ -140,7 +151,7 @@ services:
       replicas: 1
       placement:
         constraints:
-          - node.labels.role == worker
+          - node.role == worker
       restart_policy:
         condition: on-failure
         delay: 10s
@@ -161,16 +172,6 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
-    secrets:
-      - db_password
-      - admin_password
-      - secret_key
-      - smtp_host
-      - smtp_username
-      - smtp_password
-      - smtp_email
-      - domain
-      - domain_url
 
 volumes:
   db_data:
