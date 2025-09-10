@@ -4,7 +4,7 @@
 .PHONY: help deploy stop restart status logs clean check-secrets backup restore secrets-load secrets-show secrets-backup secrets-restore secrets-sync
 
 # Variáveis
-SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared
+SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared harbor jenkins argocd
 COMPOSE_FILES = $(foreach service,$(SERVICES),$(service)/docker-compose.yml)
 
 # 📋 Help - Lista todos os comandos disponíveis
@@ -70,6 +70,18 @@ deploy-cloudflared: check-swarm
 	@echo "☁️  Deployando Cloudflared..."
 	cd cloudflared && docker stack deploy -c docker-compose.yml cloudflared
 
+deploy-harbor: check-swarm
+	@echo "🚢 Deployando Harbor..."
+	cd harbor && docker stack deploy -c docker-compose.yml harbor
+
+deploy-jenkins: check-swarm
+	@echo "⚙️ Deployando Jenkins..."
+	cd jenkins && docker stack deploy -c docker-compose.yml jenkins
+
+deploy-argocd: check-swarm
+	@echo "🚀 Deployando ArgoCD..."
+	cd argocd && docker stack deploy -c docker-compose.yml argocd
+
 # 🛑 Stop de todos os serviços
 stop:
 	@echo "🛑 Parando todos os serviços..."
@@ -102,6 +114,18 @@ stop-portainer:
 stop-cloudflared:
 	@echo "🛑 Parando Cloudflared..."
 	docker stack rm cloudflared
+
+stop-harbor:
+	@echo "🛑 Parando Harbor..."
+	docker stack rm harbor
+
+stop-jenkins:
+	@echo "🛑 Parando Jenkins..."
+	docker stack rm jenkins
+
+stop-argocd:
+	@echo "🛑 Parando ArgoCD..."
+	docker stack rm argocd
 
 # 🔄 Restart de todos os serviços
 restart: stop
@@ -155,6 +179,18 @@ logs-portainer:
 logs-cloudflared:
 	@echo "📋 Logs do Cloudflared:"
 	docker service logs cloudflared_tunnel --tail 50 -f
+
+logs-harbor:
+	@echo "📋 Logs do Harbor:"
+	docker service logs harbor_core --tail 50 -f
+
+logs-jenkins:
+	@echo "📋 Logs do Jenkins:"
+	docker service logs jenkins_jenkins --tail 50 -f
+
+logs-argocd:
+	@echo "📋 Logs do ArgoCD:"
+	docker service logs argocd_argocd-server --tail 50 -f
 
 # 🧹 Limpeza completa
 clean:

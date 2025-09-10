@@ -29,4 +29,6 @@ secrets_backup/
 .DS_Store
 Thumbs.db
 
+.vscode
+
 *.txt

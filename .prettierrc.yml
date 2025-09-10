@@ -1,0 +1,40 @@
+# Prettier Configuration for Docker Compose Projects
+
+# YAML Settings
+tabWidth: 2
+useTabs: false
+singleQuote: false
+printWidth: 80
+proseWrap: preserve
+bracketSpacing: true
+bracketSameLine: false
+endOfLine: lf
+
+# YAML specific
+yamlBracketSpacing: true
+
+# File-specific overrides
+overrides:
+  - files: "*.{yml,yaml}"
+    options:
+      tabWidth: 2
+      printWidth: 80
+      singleQuote: false
+
+  - files: "docker-compose*.{yml,yaml}"
+    options:
+      tabWidth: 2
+      printWidth: 80
+      singleQuote: false
+
+  - files: "*.{js,ts,json}"
+    options:
+      tabWidth: 2
+      singleQuote: true
+      trailingComma: es5
+
+  - files: "*.md"
+    options:
+      tabWidth: 2
+      printWidth: 80
+      proseWrap: preserve

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_password}
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_TABLE_PREFIX: wp_
+      WORDPRESS_DEBUG: 1
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - wordpress-network
+    depends_on:
+      - wordpress-db
+
+  wordpress-db:
+    image: mysql:8.0
+    container_name: wordpress-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    volumes:
+      - wordpress-db-data:/var/lib/mysql
+    networks:
+      - wordpress-network
+    command: '--default-authentication-plugin=mysql_native_password'
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: wordpress-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: wordpress-db
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    networks:
+      - wordpress-network
+    depends_on:
+      - wordpress-db
+
+volumes:
+  wordpress-data:
+  wordpress-db-data:
+
+networks:
+  wordpress-network:
+    driver: bridge

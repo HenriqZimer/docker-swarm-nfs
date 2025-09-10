@@ -24,18 +24,21 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 └─────────────────────┬───────────────────────────────────────────┘
                       │ Encrypted Tunnel
                       ▼
-┌─────────────────────────────────────────────────────────────────  ┐
-│                 🐳 DOCKER SWARM CLUSTER                         
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐  │
-│  │   Grafana   │ │     N8N     │ │ Vaultwarden │ │ Portainer   │  │
-│  │    :3000    │ │    :5678    │ │     :80     │ │    :9000    │  │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘  │
-│  ┌─────────────┐                                                
-│  │   Zabbix    │         📊 Monitoramento & Logs                  
-│  │ Web + Server│         🔐 Gerenciamento de Secrets              
-│  │    :8080    │         🔄 Automação de Workflows                
-│  └─────────────┘         📈 Dashboards & Analytics                
-└─────────────────────┬───────────────────────────────────────────  ┘
+┌─────────────────────────────────────────────────────────────────────  ┐
+│                     🐳 DOCKER SWARM CLUSTER                         
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+│  │   Grafana   │ │     N8N     │ │ Vaultwarden │ │ Portainer   │      │
+│  │    :3000    │ │    :5678    │ │     :80     │ │    :9000    │      │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+│  │   Zabbix    │ │   Harbor    │ │   Jenkins   │ │   ArgoCD    │      │
+│  │    :8080    │ │    :9001    │ │    :9002    │ │    :9003    │      │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+│                                                                       │
+│     📊 Monitoramento & Analytics    🚢 Container Registry            │
+│     🔐 Gerenciamento de Secrets     ⚙️  CI/CD Automation             │
+│     🔄 Workflow Automation          � GitOps Deployment              
+└─────────────────────┬──────────────────────────────────────────────   ┘
                       │ NFS Mount
                       ▼
 ┌─────────────────────────────────────────────────────────────────  ┐
@@ -48,6 +51,9 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 │  │  • /vaultwarden/app  - Senhas Criptografadas                │  │
 │  │  • /portainer/app    - Configurações & Templates            │  │
 │  │  • /zabbix/app       - Métricas & Histórico                 │  │
+│  │  • /harbor/          - Imagens & Charts Registry            │  │
+│  │  • /jenkins/home     - Jobs & Configurações CI/CD           │  │
+│  │  • /argocd/config    - GitOps Configurations                │  │
 │  │  • /*/db             - Bancos de Dados                      │  │
 │  └─────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────  ┘
@@ -69,6 +75,9 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 | **Portainer** | latest | 9000 | Interface de gerenciamento Docker |
 | **Zabbix** | 7.0-alpine | 8080 | Monitoramento de infraestrutura |
 | **Cloudflared** | latest | - | Tunnel seguro para exposição |
+| **Harbor** | v2.9.0 | 9001 | Registry Docker e Helm Charts |
+| **Jenkins** | 2.426.1-lts | 9002 | CI/CD e automação de builds |
+| **ArgoCD** | v2.8.4 | 9003 | GitOps e entrega contínua |
 
 ### 🗄️ Bancos de Dados
 - **PostgreSQL 16-alpine**: Banco principal para todos os serviços
@@ -133,6 +142,39 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
   - Discovery automático de recursos
 - **Autenticação**: Admin/zabbix (alterar no primeiro acesso)
 
+### 🚢 Harbor - Registry Docker e Helm
+- **URL**: `https://harbor.empresa.com.br`
+- **Funcionalidades**:
+  - Registry Docker empresarial
+  - Gerenciamento de Helm Charts
+  - Escaneamento de vulnerabilidades
+  - Políticas de segurança
+  - Replicação de imagens
+  - Interface web intuitiva
+- **Autenticação**: admin/Harbor123!
+
+### ⚙️ Jenkins - CI/CD Pipeline
+- **URL**: `https://jenkins.empresa.com.br`
+- **Funcionalidades**:
+  - Pipelines de CI/CD automatizados
+  - Integração com Git e Docker
+  - Execução distribuída com agentes
+  - Blue Ocean para visualização
+  - +1800 plugins disponíveis
+  - API REST completa
+- **Autenticação**: admin/Jenkins123!
+
+### 🚀 ArgoCD - GitOps Continuous Delivery
+- **URL**: `https://argocd.empresa.com.br`
+- **Funcionalidades**:
+  - GitOps workflow nativo
+  - Sincronização automática com Git
+  - Rollback automático
+  - Health checking de aplicações
+  - RBAC granular
+  - Multi-tenancy
+- **Autenticação**: admin/ArgoCD123!
+
 ## 💾 Configuração TrueNAS NFS
 
 ### Preparação do Servidor NFS
@@ -148,7 +190,10 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ├── n8n/
 ├── vaultwarden/
 ├── portainer/
-└── zabbix/
+├── zabbix/
+├── harbor/
+├── jenkins/
+└── argocd/
 ```
 
 #### 2. Configuração de Shares NFS
@@ -275,6 +320,9 @@ make cleanup
 | Vaultwarden | https://vault.empresa.com.br | Criar conta |
 | Portainer | https://portainer.empresa.com.br | admin / (ver secret) |
 | Zabbix | https://zabbix.empresa.com.br | Admin / zabbix |
+| Harbor | https://harbor.empresa.com.br | admin / Harbor123! |
+| Jenkins | https://jenkins.empresa.com.br | admin / Jenkins123! |
+| ArgoCD | https://argocd.empresa.com.br | admin / ArgoCD123! |
 
 ## 🔧 Configuração Inicial
 

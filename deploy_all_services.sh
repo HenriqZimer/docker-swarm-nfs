@@ -28,6 +28,9 @@ services=(
     "vaultwarden"
     "portainer"
     "cloudflared"
+    "harbor"
+    "jenkins"
+    "argocd"
 )
 
 missing_services=()
