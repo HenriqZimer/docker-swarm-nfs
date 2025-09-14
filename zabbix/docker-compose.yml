@@ -160,7 +160,7 @@ services:
       - db_password
     networks:
       - monitoring-network
-      - local-network
+      - proxy-network
     healthcheck:
       test:
         - CMD-SHELL
@@ -314,8 +314,9 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  local-network:
+  proxy-network:
     external: true
+    name: cloudflared_proxy-network
 
 secrets:
   db_password:

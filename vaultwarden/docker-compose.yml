@@ -113,7 +113,7 @@ services:
       - INCOMPLETE_2FA_SCHEDULE=30 * * * * *
       - EMERGENCY_NOTIFICATION_REMINDER_SCHEDULE=0 3 * * * *
       - TZ=America/Sao_Paulo
-      # - DATABASE_URL_FILE=/run/secrets/database_url
+      # - DATABASE_URL_FILE=/run/secrets/db_url
     secrets:
       - admin_token
       - smtp_host
@@ -121,10 +121,10 @@ services:
       - smtp_username
       - smtp_password
       - domain
-      # - database_url
+      # - db_url
     networks:
       - management-network
-      - local-network
+      - proxy-network
     healthcheck:
       test:
         - CMD
@@ -183,8 +183,9 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  local-network:
+  proxy-network:
     external: true
+    name: cloudflared_proxy-network
 
 secrets:
   admin_token:
@@ -201,5 +202,5 @@ secrets:
     file: ./vaultwarden_domain.txt
   db_password:
     file: ./vaultwarden_db_password.txt
-  database_url:
-    file: ./vaultwarden_database_url.txt
+  db_url:
+    file: ./vaultwarden_db_url.txt

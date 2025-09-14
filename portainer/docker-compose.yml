@@ -13,7 +13,7 @@ services:
       - admin_password
     networks:
       - management-network
-      - local-network
+      - proxy-network
     deploy:
       mode: replicated
       replicas: 1
@@ -51,7 +51,7 @@ services:
       AGENT_CLUSTER_ADDR: tasks.portainer_agent
     networks:
       - management-network
-      - local-network
+      - proxy-network
     deploy:
       mode: global
       placement:
@@ -91,8 +91,9 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  local-network:
+  proxy-network:
     external: true
+    name: cloudflared_proxy-network
 
 secrets:
   admin_password:
