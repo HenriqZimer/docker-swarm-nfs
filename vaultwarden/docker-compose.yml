@@ -1,56 +1,55 @@
 ---
 services:
-  db:
-    image: postgres:16-alpine
-    volumes:
-      - db_data:/var/lib/postgresql/data:rw
-    command: |
-      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
-    environment:
-      - POSTGRES_DB=vaultwarden
-      - POSTGRES_USER=vaultwarden
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - TZ=America/Sao_Paulo
-    secrets:
-      - db_password
-    networks:
-      - management-network
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - pg_isready -U vaultwarden -d vaultwarden
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
-        delay: 10s
-        max_attempts: 3
-        window: 120s
-      update_config:
-        parallelism: 1
-        delay: 30s
-        failure_action: rollback
-        order: stop-first
-      rollback_config:
-        parallelism: 1
-        delay: 30s
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-
+  # db:
+  #   image: postgres:16-alpine
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data:rw
+  #   command: |
+  #     postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
+  #   environment:
+  #     - POSTGRES_DB=vaultwarden
+  #     - POSTGRES_USER=vaultwarden
+  #     - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+  #     - PGDATA=/var/lib/postgresql/data/pgdata
+  #     - TZ=America/Sao_Paulo
+  #   secrets:
+  #     - db_password
+  #   networks:
+  #     - management-network
+  #   healthcheck:
+  #     test:
+  #       - CMD-SHELL
+  #       - pg_isready -U vaultwarden -d vaultwarden
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 60s
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 1
+  #     placement:
+  #       constraints:
+  #         - node.role == manager
+  #     restart_policy:
+  #       condition: on-failure
+  #       delay: 10s
+  #       max_attempts: 3
+  #       window: 120s
+  #     update_config:
+  #       parallelism: 1
+  #       delay: 30s
+  #       failure_action: rollback
+  #       order: stop-first
+  #     rollback_config:
+  #       parallelism: 1
+  #       delay: 30s
+  #     resources:
+  #       limits:
+  #         cpus: "1.0"
+  #         memory: 512M
+  #       reservations:
+  #         cpus: "0.25"
+  #         memory: 256M
   app:
     image: vaultwarden/server:latest
     volumes:
@@ -113,8 +112,8 @@ services:
       - EVENT_CLEANUP_SCHEDULE=0 10 0 * * *
       - INCOMPLETE_2FA_SCHEDULE=30 * * * * *
       - EMERGENCY_NOTIFICATION_REMINDER_SCHEDULE=0 3 * * * *
-      - DATABASE_URL_FILE=/run/secrets/database_url
       - TZ=America/Sao_Paulo
+      # - DATABASE_URL_FILE=/run/secrets/database_url
     secrets:
       - admin_token
       - smtp_host
@@ -122,8 +121,7 @@ services:
       - smtp_username
       - smtp_password
       - domain
-      - db_password
-      - database_url
+      # - database_url
     networks:
       - management-network
       - local-network
@@ -131,7 +129,7 @@ services:
       test:
         - CMD
         - curl
-        - '-f'
+        - "-f"
         - http://localhost:80/alive
       interval: 30s
       timeout: 10s
@@ -146,44 +144,44 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: '1.0'
+          cpus: "1.0"
         reservations:
           memory: 512M
-          cpus: '0.5'
+          cpus: "0.5"
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
+        delay: 30s
+        max_attempts: 5
         window: 120s
       update_config:
         parallelism: 1
-        delay: 10s
+        delay: 60s
         failure_action: rollback
-        order: stop-first
+        order: start-first
       rollback_config:
         parallelism: 1
         delay: 5s
         order: stop-first
 
 volumes:
+  # db_data:
+  #   driver: local
+  #   driver_opts:
+  #     type: nfs
+  #     o: addr=truenas-scale,nfsvers=4,rw
+  #     device: ":/mnt/slowbro/docker/vaultwarden/db"
   app_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/vaultwarden/app'
-  db_data:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/vaultwarden/db'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/vaultwarden/app"
 
 networks:
   management-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   local-network:
     external: true

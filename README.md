@@ -13,19 +13,19 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     🌐 CLOUDFLARE EDGE                          
+│                     🌐 CLOUDFLARE EDGE
 │              (DDoS Protection, SSL, CDN, WAF)                   │
 └─────────────────────┬───────────────────────────────────────────┘
                       │ HTTPS (443/80)
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                 ☁️  CLOUDFLARE TUNNEL                           
+│                 ☁️  CLOUDFLARE TUNNEL
 │                    (Zero Trust Access)                          │
 └─────────────────────┬───────────────────────────────────────────┘
                       │ Encrypted Tunnel
                       ▼
 ┌─────────────────────────────────────────────────────────────────────  ┐
-│                     🐳 DOCKER SWARM CLUSTER                         
+│                     🐳 DOCKER SWARM CLUSTER
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
 │  │   Grafana   │ │     N8N     │ │ Vaultwarden │ │ Portainer   │      │
 │  │    :3000    │ │    :5678    │ │     :80     │ │    :9000    │      │
@@ -37,15 +37,15 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 │                                                                       │
 │     📊 Monitoramento & Analytics    🚢 Container Registry            │
 │     🔐 Gerenciamento de Secrets     ⚙️  CI/CD Automation             │
-│     🔄 Workflow Automation          � GitOps Deployment              
+│     🔄 Workflow Automation          � GitOps Deployment
 └─────────────────────┬──────────────────────────────────────────────   ┘
                       │ NFS Mount
                       ▼
 ┌─────────────────────────────────────────────────────────────────  ┐
-│                 💾 TRUENAS NFS SERVER                            
+│                 💾 TRUENAS NFS SERVER
 │                    192.168.1.105                                  │
 │  ┌─────────────────────────────────────────────────────────────┐  │
-│  │              📁 Volumes Persistentes                          
+│  │              📁 Volumes Persistentes
 │  │  • /grafana/app      - Dashboards & Plugins                 │  │
 │  │  • /n8n/app          - Workflows & Executions               │  │
 │  │  • /vaultwarden/app  - Senhas Criptografadas                │  │
@@ -62,34 +62,39 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ## 🛠️ Stack de Tecnologias
 
 ### 🐳 Orquestração de Containers
+
 - **Docker Swarm**: Orquestração nativa do Docker
 - **Docker Compose**: Definição declarativa de serviços
 - **Docker Secrets**: Gerenciamento seguro de credenciais
 
 ### 📊 Serviços Principais
-| Serviço | Versão | Porta | Descrição |
-|---------|--------|-------|-----------|
-| **Grafana** | latest | 3000 | Dashboards e visualização de dados |
-| **N8N** | latest | 5678 | Automação de workflows e integrações |
-| **Vaultwarden** | latest | 80 | Gerenciador de senhas (Bitwarden) |
-| **Portainer** | latest | 9000 | Interface de gerenciamento Docker |
-| **Zabbix** | 7.0-alpine | 8080 | Monitoramento de infraestrutura |
-| **Cloudflared** | latest | - | Tunnel seguro para exposição |
-| **Harbor** | v2.9.0 | 9001 | Registry Docker e Helm Charts |
-| **Jenkins** | 2.426.1-lts | 9002 | CI/CD e automação de builds |
-| **ArgoCD** | v2.8.4 | 9003 | GitOps e entrega contínua |
+
+| Serviço         | Versão      | Porta | Descrição                            |
+| --------------- | ----------- | ----- | ------------------------------------ |
+| **Grafana**     | latest      | 3000  | Dashboards e visualização de dados   |
+| **N8N**         | latest      | 5678  | Automação de workflows e integrações |
+| **Vaultwarden** | latest      | 80    | Gerenciador de senhas (Bitwarden)    |
+| **Portainer**   | latest      | 9000  | Interface de gerenciamento Docker    |
+| **Zabbix**      | 7.0-alpine  | 8080  | Monitoramento de infraestrutura      |
+| **Cloudflared** | latest      | -     | Tunnel seguro para exposição         |
+| **Harbor**      | v2.9.0      | 9001  | Registry Docker e Helm Charts        |
+| **Jenkins**     | 2.426.1-lts | 9002  | CI/CD e automação de builds          |
+| **ArgoCD**      | v2.8.4      | 9003  | GitOps e entrega contínua            |
 
 ### 🗄️ Bancos de Dados
+
 - **PostgreSQL 16-alpine**: Banco principal para todos os serviços
 - Instâncias separadas por serviço para isolamento
 - Backup automático e retenção configurável
 
 ### 💾 Armazenamento
+
 - **TrueNAS Core/Scale**: Servidor NFS centralizado
 - **ZFS**: Sistema de arquivos com snapshots e compressão
 - **NFS v4**: Protocolo de rede para volumes persistentes
 
 ### 🌐 Rede e Segurança
+
 - **Cloudflare Tunnel**: Exposição segura sem portas abertas
 - **Cloudflare DNS**: Resolução de nomes e balanceamento
 - **Zero Trust**: Controle de acesso granular
@@ -98,6 +103,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ## 🚀 Serviços Implementados
 
 ### 📊 Grafana - Dashboards e Analytics
+
 - **URL**: `https://grafana.empresa.com.br`
 - **Funcionalidades**:
   - Dashboards personalizáveis
@@ -107,6 +113,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: SMTP + senha pré-configurada
 
 ### 🔄 N8N - Automação de Workflows
+
 - **URL**: `https://n8n.empresa.com.br`
 - **Funcionalidades**:
   - Automação visual de processos
@@ -116,6 +123,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: Basic Auth configurado
 
 ### 🔐 Vaultwarden - Gerenciador de Senhas
+
 - **URL**: `https://vault.empresa.com.br`
 - **Funcionalidades**:
   - Cofre de senhas criptografado
@@ -125,6 +133,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: Token admin + 2FA
 
 ### 🐳 Portainer - Gerenciamento Docker
+
 - **URL**: `https://portainer.empresa.com.br`
 - **Funcionalidades**:
   - Interface web para Docker Swarm
@@ -134,6 +143,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: Hash bcrypt configurado
 
 ### 📈 Zabbix - Monitoramento Completo
+
 - **URL**: `https://zabbix.empresa.com.br`
 - **Funcionalidades**:
   - Monitoramento de infraestrutura
@@ -143,6 +153,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: Admin/zabbix (alterar no primeiro acesso)
 
 ### 🚢 Harbor - Registry Docker e Helm
+
 - **URL**: `https://harbor.empresa.com.br`
 - **Funcionalidades**:
   - Registry Docker empresarial
@@ -154,6 +165,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: admin/Harbor123!
 
 ### ⚙️ Jenkins - CI/CD Pipeline
+
 - **URL**: `https://jenkins.empresa.com.br`
 - **Funcionalidades**:
   - Pipelines de CI/CD automatizados
@@ -165,6 +177,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 - **Autenticação**: admin/Jenkins123!
 
 ### 🚀 ArgoCD - GitOps Continuous Delivery
+
 - **URL**: `https://argocd.empresa.com.br`
 - **Funcionalidades**:
   - GitOps workflow nativo
@@ -180,6 +193,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ### Preparação do Servidor NFS
 
 #### 1. Configuração de Datasets
+
 ```bash
 # No TrueNAS Web UI:
 # Storage > Pools > [pool] > Add Dataset
@@ -197,6 +211,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ```
 
 #### 2. Configuração de Shares NFS
+
 ```bash
 # Sharing > Unix (NFS) Shares
 # Path: /mnt/pool/docker-swarm
@@ -205,6 +220,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ```
 
 #### 3. Serviços Necessários
+
 ```bash
 # Services > NFS
 # Enable: ✅ Start Automatically
@@ -215,6 +231,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ### Configuração no Docker Swarm
 
 #### 1. Teste de Conectividade
+
 ```bash
 # Testar montagem NFS
 sudo mount -t nfs 192.168.1.105:/mnt/pool/docker-swarm /tmp/test
@@ -223,6 +240,7 @@ sudo umount /tmp/test
 ```
 
 #### 2. Volumes Docker
+
 ```yaml
 # Exemplo de volume NFS no docker-compose.yml
 volumes:
@@ -230,13 +248,14 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,rw,nfsvers=4
+      o: addr=truenas-scale,rw,nfsvers=4
       device: ":/mnt/pool/docker-swarm/grafana"
 ```
 
 ## 🔐 Gerenciamento de Secrets
 
 ### Sistema Centralizado
+
 O projeto utiliza um sistema centralizado de secrets com o arquivo `.env`:
 
 ```bash
@@ -251,6 +270,7 @@ CLOUDFLARED_TUNNEL_TOKEN=cloudflare-tunnel-token
 ```
 
 ### Comandos Make para Secrets
+
 ```bash
 # Ver todas as secrets
 make secrets-show
@@ -271,6 +291,7 @@ make secrets-sync
 ### Comandos Make Disponíveis
 
 #### Deploy de Serviços
+
 ```bash
 # Deploy completo
 make deploy-all
@@ -285,6 +306,7 @@ make deploy-cloudflared
 ```
 
 #### Gerenciamento
+
 ```bash
 # Parar serviços
 make stop-all
@@ -299,6 +321,7 @@ make status
 ```
 
 #### Manutenção
+
 ```bash
 # Backup completo
 make backup
@@ -313,20 +336,22 @@ make cleanup
 ## 🌐 Configuração de DNS e Acesso
 
 ### URLs de Acesso
-| Serviço | URL | Credenciais Padrão |
-|---------|-----|-------------------|
-| Grafana | https://grafana.empresa.com.br | admin / (ver secret) |
-| N8N | https://n8n.empresa.com.br | Basic Auth |
-| Vaultwarden | https://vault.empresa.com.br | Criar conta |
-| Portainer | https://portainer.empresa.com.br | admin / (ver secret) |
-| Zabbix | https://zabbix.empresa.com.br | Admin / zabbix |
-| Harbor | https://harbor.empresa.com.br | admin / Harbor123! |
-| Jenkins | https://jenkins.empresa.com.br | admin / Jenkins123! |
-| ArgoCD | https://argocd.empresa.com.br | admin / ArgoCD123! |
+
+| Serviço     | URL                              | Credenciais Padrão   |
+| ----------- | -------------------------------- | -------------------- |
+| Grafana     | https://grafana.empresa.com.br   | admin / (ver secret) |
+| N8N         | https://n8n.empresa.com.br       | Basic Auth           |
+| Vaultwarden | https://vault.empresa.com.br     | Criar conta          |
+| Portainer   | https://portainer.empresa.com.br | admin / (ver secret) |
+| Zabbix      | https://zabbix.empresa.com.br    | Admin / zabbix       |
+| Harbor      | https://harbor.empresa.com.br    | admin / Harbor123!   |
+| Jenkins     | https://jenkins.empresa.com.br   | admin / Jenkins123!  |
+| ArgoCD      | https://argocd.empresa.com.br    | admin / ArgoCD123!   |
 
 ## 🔧 Configuração Inicial
 
 ### 1. Pré-requisitos
+
 ```bash
 # Docker Swarm inicializado
 docker swarm init
@@ -337,6 +362,7 @@ docker swarm init
 ```
 
 ### 2. Clone e Setup
+
 ```bash
 git clone https://github.com/HenriqZimer/docker-swarm.git
 cd docker-swarm
@@ -350,6 +376,7 @@ make secrets-sync
 ```
 
 ### 3. Deploy Completo
+
 ```bash
 # Deploy de todos os serviços
 make deploy-all
@@ -364,6 +391,7 @@ make logs-grafana
 ## 🛡️ Segurança e Backup
 
 ### Recursos de Segurança
+
 - ✅ **Cloudflare Protection**: DDoS, WAF, Rate Limiting
 - ✅ **Zero Trust Access**: Controle granular de acesso
 - ✅ **Docker Secrets**: Credenciais criptografadas
@@ -372,6 +400,7 @@ make logs-grafana
 - ✅ **NFS Security**: Controle de acesso por IP
 
 ### Estratégia de Backup
+
 ```bash
 # Backup automático via TrueNAS
 # - Snapshots ZFS a cada hora
@@ -384,6 +413,7 @@ make secrets-backup  # Apenas secrets
 ```
 
 ### Monitoramento
+
 - **Zabbix**: Métricas de infraestrutura
 - **Grafana**: Dashboards personalizados
 - **Portainer**: Status dos containers
@@ -392,11 +422,13 @@ make secrets-backup  # Apenas secrets
 ## 📊 Requisitos de Sistema
 
 ### Hardware Mínimo
+
 - **CPU**: 2 cores / 4 threads
 - **RAM**: 8GB (16GB recomendado)
 - **Storage**: 60GB SSD local + NFS
 
 ### TrueNAS Requirements
+
 - **CPU**: 2 cores mínimo
 - **RAM**: 8GB (mais para ZFS cache)
 - **Storage**: Pool ZFS com redundância
@@ -406,6 +438,7 @@ make secrets-backup  # Apenas secrets
 ### Problemas Comuns
 
 #### Serviços não iniciam
+
 ```bash
 # Verificar secrets
 make secrets-show
@@ -418,6 +451,7 @@ mount -t nfs 192.168.1.105:/mnt/pool/docker-swarm /tmp/test
 ```
 
 #### Performance lenta
+
 ```bash
 # Verificar recursos
 docker stats
@@ -431,6 +465,7 @@ iperf3 -c 192.168.1.105
 ```
 
 #### Problemas de acesso
+
 ```bash
 # Verificar tunnel Cloudflare
 docker service logs cloudflared_tunnel
@@ -445,6 +480,7 @@ curl -I https://grafana.empresa.com.br
 ## 📚 Documentação Adicional
 
 ### READMEs Específicos
+
 - [Grafana](/grafana/README.md) - Dashboards e visualização
 - [N8N](/n8n/README.md) - Automação de workflows
 - [Vaultwarden](/vaultwarden/README.md) - Gerenciador de senhas
@@ -453,6 +489,7 @@ curl -I https://grafana.empresa.com.br
 - [Cloudflared](/cloudflared/README.md) - Tunnel seguro
 
 ### Links Úteis
+
 - [Docker Swarm Docs](https://docs.docker.com/engine/swarm/)
 - [TrueNAS Documentation](https://www.truenas.com/docs/)
 - [Cloudflare Tunnel Guide](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
