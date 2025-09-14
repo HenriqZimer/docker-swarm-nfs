@@ -47,16 +47,16 @@ services:
         monitor: 60s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
     logging:
       driver: json-file
       options:
         max-size: 10m
-        max-file: '3'
+        max-file: "3"
 
   server:
     image: zabbix/zabbix-server-pgsql:alpine-7.0-latest
@@ -82,7 +82,7 @@ services:
       ZBX_STARTPROXYPOLLERS: 1
       ZBX_PROXYCONFIGFREQUENCY: 3600
       ZBX_PROXYDATAFREQUENCY: 1
-      ZBX_JAVAGATEWAY_ENABLE: 'true'
+      ZBX_JAVAGATEWAY_ENABLE: "true"
       ZBX_JAVAGATEWAY: java-gateway
       ZBX_JAVAGATEWAYPORT: 10052
       ZBX_STARTJAVAPOLLERS: 2
@@ -131,10 +131,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 
   app:
@@ -153,9 +153,9 @@ services:
       ZBX_UPLOADMAXFILESIZE: 16M
       ZBX_MAXINPUTTIME: 300
       ZBX_SESSION_NAME: zbx_sessionid
-      ZBX_DENY_GUI_ACCESS: 'false'
-      ZBX_GUI_ACCESS_IP_RANGE: ''
-      ZBX_GUI_WARNING_MSG: ''
+      ZBX_DENY_GUI_ACCESS: "false"
+      ZBX_GUI_ACCESS_IP_RANGE: ""
+      ZBX_GUI_WARNING_MSG: ""
     secrets:
       - db_password
     networks:
@@ -190,10 +190,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 256M
 
   agent:
@@ -201,15 +201,15 @@ services:
     environment:
       ZBX_SERVER_HOST: server
       ZBX_SERVER_PORT: 10051
-      ZBX_HOSTNAME: '{{.Node.Hostname}}-agent'
+      ZBX_HOSTNAME: "{{.Node.Hostname}}-agent"
       ZBX_HOST_METADATA: docker-swarm-agent linux
       ZBX_TIMEOUT: 30
       ZBX_DEBUGLEVEL: 3
       ZBX_ENABLEREMOTECOMMANDS: 1
       ZBX_LOGREMOTECOMMANDS: 1
       ZBX_STARTAGENTS: 3
-      ZBX_ACTIVE_ALLOW: 'true'
-      ZBX_PASSIVE_ALLOW: 'true'
+      ZBX_ACTIVE_ALLOW: "true"
+      ZBX_PASSIVE_ALLOW: "true"
       ZBX_LOADMODULEPATH: /var/lib/zabbix/modules
       ZBX_LISTENPORT: 10050
       ZBX_REFRESHACTIVECHECKS: 60
@@ -236,10 +236,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
 
   java-gateway:
@@ -270,10 +270,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
 
 volumes:
@@ -281,38 +281,38 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/zabbix/db'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/zabbix/db"
   export_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/zabbix/export'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/zabbix/export"
   modules_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/zabbix/modules'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/zabbix/modules"
   enc_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/zabbix/enc'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/zabbix/enc"
   ssh_keys_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=192.168.1.105,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/zabbix/ssh_keys'
+      o: addr=truenas-scale,nfsvers=4,rw
+      device: ":/mnt/slowbro/docker/zabbix/ssh_keys"
 
 networks:
   monitoring-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   local-network:
     external: true
