@@ -1,61 +1,238 @@
-version: '3.8'
-
+---
 services:
-  wordpress:
-    image: wordpress:latest
-    container_name: wordpress
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    environment:
-      WORDPRESS_DB_HOST: wordpress-db
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_password}
-      WORDPRESS_DB_NAME: wordpress
-      WORDPRESS_TABLE_PREFIX: wp_
-      WORDPRESS_DEBUG: 1
-    volumes:
-      - wordpress-data:/var/www/html
-    networks:
-      - wordpress-network
-    depends_on:
-      - wordpress-db
-
-  wordpress-db:
+  db:
     image: mysql:8.0
-    container_name: wordpress-db
-    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
     environment:
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress
-      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD:-wordpress_password}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
-    volumes:
-      - wordpress-db-data:/var/lib/mysql
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password
+      TZ: America/Sao_Paulo
+    secrets:
+      - db_password
     networks:
-      - wordpress-network
-    command: '--default-authentication-plugin=mysql_native_password'
+      - website-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'mysqladmin ping -h localhost -u root --password="$$(cat /run/secrets/db_password)" --silent || exit 1'
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  app:
+    image: wordpress:latest
+    volumes:
+      - app_data:/var/www/html
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD_FILE=/run/secrets/db_password
+      - WORDPRESS_DB_NAME=wordpress
+      - WORDPRESS_TABLE_PREFIX=wp_
+      - WORDPRESS_DEBUG=0
+      - WORDPRESS_CONFIG_EXTRA=
+        define('WP_MEMORY_LIMIT', '256M');
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+        define('WP_AUTO_UPDATE_CORE', false);
+        define('DISALLOW_FILE_EDIT', true);
+        define('FORCE_SSL_ADMIN', true);
+      - TZ=America/Sao_Paulo
+    secrets:
+      - db_password
+    networks:
+      - website-network
+      - proxy-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:80/wp-admin/install.php || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+  # redis:
+  #   image: redis:7-alpine
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - website-network
+  #   healthcheck:
+  #     test:
+  #       - CMD
+  #       - redis-cli
+  #       - ping
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 30s
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 1
+  #     placement:
+  #       constraints:
+  #         - node.role == worker
+  #     restart_policy:
+  #       condition: on-failure
+  #       delay: 10s
+  #       max_attempts: 3
+  #       window: 120s
+  #     update_config:
+  #       parallelism: 1
+  #       delay: 30s
+  #       failure_action: rollback
+  #       order: stop-first
+  #     rollback_config:
+  #       parallelism: 1
+  #       delay: 30s
+  #     resources:
+  #       limits:
+  #         cpus: "0.5"
+  #         memory: 256M
+  #       reservations:
+  #         cpus: "0.1"
+  #         memory: 64M
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
-    container_name: wordpress-phpmyadmin
-    restart: unless-stopped
-    ports:
-      - "8081:80"
     environment:
-      PMA_HOST: wordpress-db
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD_FILE=/run/secrets/db_password
+      - UPLOAD_LIMIT=256M
+      - MEMORY_LIMIT=256M
+      - MAX_EXECUTION_TIME=300
+      - TZ=America/Sao_Paulo
+      - PMA_ABSOLUTE_URI_FILE=/run/secrets/phpmyadmin_url
+    secrets:
+      - db_password
+      - phpmyadmin_url
     networks:
-      - wordpress-network
-    depends_on:
-      - wordpress-db
+      - website-network
+      - proxy-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:80/ || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.2"
+          memory: 128M
 
 volumes:
-  wordpress-data:
-  wordpress-db-data:
+  db_data:
+    # driver: local
+    # driver_opts:
+    #   type: nfs
+    #   o: addr=truenas-scale,nfsvers=4,rw
+    #   device: ":/mnt/slowbro/docker/wordpress/db"
+  app_data:
+    # driver: local
+    # driver_opts:
+    #   type: nfs
+    #   o: addr=truenas-scale,nfsvers=4,rw
+    #   device: ":/mnt/slowbro/docker/wordpress/app"
+  # redis_data:
+  #   # driver: local
+  #   # driver_opts:
+  #   #   type: nfs
+  #   #   o: addr=truenas-scale,nfsvers=4,rw
+  #   #   device: ":/mnt/slowbro/docker/wordpress/redis"
 
 networks:
-  wordpress-network:
-    driver: bridge
+  website-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+  proxy-network:
+    external: true
+    name: cloudflared_proxy-network
+
+secrets:
+  db_password:
+    file: ./wordpress_db_password.txt
+  phpmyadmin_url:
+    file: ./phpmyadmin_url.txt
