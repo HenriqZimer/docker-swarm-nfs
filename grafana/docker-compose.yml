@@ -178,14 +178,14 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/grafana/db"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/grafana/db"
   app_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/grafana/app"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/grafana/app"
 
 networks:
   monitoring-network:

@@ -82,8 +82,8 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/portainer/app"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/portainer/app"
 
 networks:
   management-network:

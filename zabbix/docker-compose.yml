@@ -281,32 +281,32 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/zabbix/db"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/zabbix/db"
   export_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/zabbix/export"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/zabbix/export"
   modules_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/zabbix/modules"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/zabbix/modules"
   enc_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/zabbix/enc"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/zabbix/enc"
   ssh_keys_data:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/zabbix/ssh_keys"
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/zabbix/ssh_keys"
 
 networks:
   monitoring-network:
