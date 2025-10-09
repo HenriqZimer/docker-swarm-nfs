@@ -80,4 +80,8 @@ secrets:
   qbittorrent_username:
     file: ./qbittorrent_username.txt
   qbittorrent_password:
+<<<<<<< HEAD
     file: ./qbittorrent_password.txt
+=======
+    file: ./qbittorrent_password.txt
+>>>>>>> dee6057114030f8bc1c1974bafea20845e47a668
