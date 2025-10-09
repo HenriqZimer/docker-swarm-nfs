@@ -1,0 +1,96 @@
+---
+services:
+  app:
+    image: linuxserver/qbittorrent:latest
+    volumes:
+      - config_data:/config
+      - downloads_data:/downloads
+      - ./setup-credentials.sh:/usr/local/bin/setup-credentials.sh:ro
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Sao_Paulo
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    secrets:
+      - qbittorrent_username
+      - qbittorrent_password
+    networks:
+      - media-network
+      - proxy-network
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: ingress
+      - target: 6881
+        published: 6881
+        protocol: tcp
+        mode: host
+      - target: 6881
+        published: 6881
+        protocol: udp
+        mode: host
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:8080 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 2G
+        reservations:
+          cpus: "1.0"
+          memory: 512M
+
+volumes:
+  config_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/qbittorrent/config"
+  downloads_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/downloads"
+
+networks:
+  media-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+  proxy-network:
+    external: true
+    name: cloudflared_proxy-network
+
+secrets:
+  qbittorrent_username:
+    file: ./qbittorrent_username.txt
+  qbittorrent_password:
+    file: ./qbittorrent_password.txt

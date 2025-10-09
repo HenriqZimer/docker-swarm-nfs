@@ -31,6 +31,8 @@ services=(
     "harbor"
     "jenkins"
     "argocd"
+    "jellyfin"
+    "qbittorrent"
 )
 
 missing_services=()
@@ -98,6 +100,8 @@ deploy_service "n8n" "N8N (Automation)"
 deploy_service "vaultwarden" "Vaultwarden (Password Manager)"
 deploy_service "portainer" "Portainer (Container Manager)"
 deploy_service "cloudflared" "Cloudflared (Tunnel)"
+deploy_service "jellyfin" "Jellyfin (Media Server)"
+deploy_service "qbittorrent" "qBittorrent (Torrent Client)"
 
 echo "🎉 ========================================"
 echo "   DEPLOY CONCLUÍDO!"
@@ -117,6 +121,8 @@ echo "docker service logs n8n_app"
 echo "docker service logs vaultwarden_app"
 echo "docker service logs portainer_app"
 echo "docker service logs cloudflared_tunnel"
+echo "docker service logs jellyfin_app"
+echo "docker service logs qbittorrent_app"
 echo ""
 
 echo "📊 Status dos serviços:"
