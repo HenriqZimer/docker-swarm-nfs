@@ -50,6 +50,12 @@ echo "=================================="
 echo -e "• ${GREEN}Portainer${NC}   - ${CYAN}http://localhost:9000${NC}     - admin / (ver secret)"
 echo ""
 
+echo -e "${BLUE}🎬 MÍDIA & ENTRETENIMENTO${NC}"
+echo "=================================="
+echo -e "• ${GREEN}Jellyfin${NC}     - ${CYAN}http://localhost:8096${NC}      - Setup inicial via interface web"
+echo -e "• ${GREEN}qBittorrent${NC} - ${CYAN}http://localhost:8080${NC}     - admin / (ver logs para senha inicial)"
+echo ""
+
 echo -e "${BLUE}📋 STATUS DOS SERVIÇOS${NC}"
 echo "=================================="
 
@@ -64,6 +70,8 @@ services=(
     "harbor"
     "jenkins"
     "argocd"
+    "jellyfin"
+    "qbittorrent"
 )
 
 for service in "${services[@]}"; do
@@ -93,6 +101,7 @@ echo "• Jenkins → ArgoCD (Deploy automático)"
 echo "• ArgoCD → Harbor (Pull de imagens)"
 echo "• Grafana ← Zabbix (Dashboards de monitoramento)"
 echo "• N8N ↔ Todos (Automação e integrações)"
+echo "• qBittorrent → Jellyfin (Downloads automáticos para biblioteca de mídia)"
 echo ""
 
 echo -e "${CYAN}🌍 Para expor via Cloudflare Tunnel:${NC}"
@@ -103,4 +112,8 @@ echo "  - hostname: jenkins.seudominio.com"
 echo "    service: http://jenkins_jenkins:8080"
 echo "  - hostname: argocd.seudominio.com"
 echo "    service: http://argocd_argocd-server:8080"
+echo "  - hostname: jellyfin.seudominio.com"
+echo "    service: http://jellyfin_app:8096"
+echo "  - hostname: qbittorrent.seudominio.com"
+echo "    service: http://qbittorrent_app:8080"
 echo ""

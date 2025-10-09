@@ -59,6 +59,11 @@ services:
         max-file: "3"
 
   server:
+    ports:
+      - target: 10051
+        published: 10051
+        protocol: tcp
+        mode: host
     image: zabbix/zabbix-server-pgsql:alpine-7.0-latest
     volumes:
       - export_data:/var/lib/zabbix/export:rw

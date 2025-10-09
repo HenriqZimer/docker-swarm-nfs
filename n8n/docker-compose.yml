@@ -73,7 +73,7 @@ services:
       - N8N_SMTP_IGNORE_TLS=false
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
-      - WEBHOOK_URL_FILE=/run/secrets/webhook_url
+      - WEBHOOK_URL=https://n8n.henriqzimer.com.br/
       - GENERIC_TIMEZONE=America/Sao_Paulo
       - EXECUTIONS_DATA_SAVE_ON_ERROR=all
       - EXECUTIONS_DATA_SAVE_ON_SUCCESS=all
