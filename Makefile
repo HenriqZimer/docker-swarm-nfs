@@ -1,10 +1,10 @@
 # 🚀 Docker Swarm Services Management
 # Makefile para gerenciar todos os serviços do Docker Swarm
 
-.PHONY: help deploy stop restart status logs clean check-secrets backup restore secrets-load secrets-show secrets-backup secrets-restore secrets-sync
+.PHONY: help deploy stop restart status logs clean check-secrets backup restore
 
 # Variáveis
-SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared harbor jenkins argocd
+SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared jellyfin qbittorrent
 COMPOSE_FILES = $(foreach service,$(SERVICES),$(service)/docker-compose.yml)
 
 # 📋 Help - Lista todos os comandos disponíveis
@@ -33,17 +33,23 @@ help:
 	@echo ""
 	@echo "🔐 Secrets:"
 	@echo "  make check-secrets   - Verifica arquivos de secrets"
-	@echo "  make secrets-load    - Carrega variáveis de ambiente"
-	@echo "  make secrets-show    - Mostra secrets mascaradas"
-	@echo "  make secrets-backup  - Backup do arquivo .env"
-	@echo "  make secrets-restore - Restaura backup mais recente"
 	@echo ""
 	@echo "🏗️  Serviços disponíveis: $(SERVICES)"
 
 # 📦 Deploy de todos os serviços
 deploy: check-swarm
 	@echo "🚀 Deployando todos os serviços..."
-	./deploy_all_services.sh
+	@if [ -f "scripts/deploy_all_services.sh" ]; then \
+		./scripts/deploy_all_services.sh; \
+	else \
+		echo "Script deploy_all_services.sh não encontrado, fazendo deploy manual..."; \
+		for service in $(SERVICES); do \
+			if [ -d "$$service" ] && [ -f "$$service/docker-compose.yml" ]; then \
+				echo "📦 Deployando $$service..."; \
+				cd $$service && docker stack deploy -c docker-compose.yml $$service && cd ..; \
+			fi; \
+		done; \
+	fi
 
 # 📦 Deploy de serviços individuais
 deploy-grafana: check-swarm
@@ -70,17 +76,13 @@ deploy-cloudflared: check-swarm
 	@echo "☁️  Deployando Cloudflared..."
 	cd cloudflared && docker stack deploy -c docker-compose.yml cloudflared
 
-deploy-harbor: check-swarm
-	@echo "🚢 Deployando Harbor..."
-	cd harbor && docker stack deploy -c docker-compose.yml harbor
+deploy-jellyfin: check-swarm
+	@echo "🎬 Deployando Jellyfin..."
+	cd jellyfin && docker stack deploy -c docker-compose.yml jellyfin
 
-deploy-jenkins: check-swarm
-	@echo "⚙️ Deployando Jenkins..."
-	cd jenkins && docker stack deploy -c docker-compose.yml jenkins
-
-deploy-argocd: check-swarm
-	@echo "🚀 Deployando ArgoCD..."
-	cd argocd && docker stack deploy -c docker-compose.yml argocd
+deploy-qbittorrent: check-swarm
+	@echo "� Deployando qBittorrent..."
+	cd qbittorrent && docker stack deploy -c docker-compose.yml qbittorrent
 
 # 🛑 Stop de todos os serviços
 stop:
@@ -115,17 +117,13 @@ stop-cloudflared:
 	@echo "🛑 Parando Cloudflared..."
 	docker stack rm cloudflared
 
-stop-harbor:
-	@echo "🛑 Parando Harbor..."
-	docker stack rm harbor
+stop-jellyfin:
+	@echo "🛑 Parando Jellyfin..."
+	docker stack rm jellyfin
 
-stop-jenkins:
-	@echo "🛑 Parando Jenkins..."
-	docker stack rm jenkins
-
-stop-argocd:
-	@echo "🛑 Parando ArgoCD..."
-	docker stack rm argocd
+stop-qbittorrent:
+	@echo "🛑 Parando qBittorrent..."
+	docker stack rm qbittorrent
 
 # 🔄 Restart de todos os serviços
 restart: stop
@@ -180,17 +178,13 @@ logs-cloudflared:
 	@echo "📋 Logs do Cloudflared:"
 	docker service logs cloudflared_tunnel --tail 50 -f
 
-logs-harbor:
-	@echo "📋 Logs do Harbor:"
-	docker service logs harbor_core --tail 50 -f
+logs-jellyfin:
+	@echo "📋 Logs do Jellyfin:"
+	docker service logs jellyfin_app --tail 50 -f
 
-logs-jenkins:
-	@echo "📋 Logs do Jenkins:"
-	docker service logs jenkins_jenkins --tail 50 -f
-
-logs-argocd:
-	@echo "📋 Logs do ArgoCD:"
-	docker service logs argocd_argocd-server --tail 50 -f
+logs-qbittorrent:
+	@echo "📋 Logs do qBittorrent:"
+	docker service logs qbittorrent_app --tail 50 -f
 
 # 🧹 Limpeza completa
 clean:
@@ -230,39 +224,6 @@ check-secrets:
 	else \
 		echo "❌ Alguns secrets estão faltando"; \
 	fi
-
-# 🔐 Comandos de gerenciamento de secrets
-secrets-load:
-	@echo "🔑 Carregando variáveis de ambiente..."
-	@./manage-secrets.sh load
-
-secrets-show:
-	@echo "👁️  Mostrando secrets (mascaradas)..."
-	@./manage-secrets.sh show
-
-secrets-show-grafana:
-	@echo "📊 Secrets do Grafana:"
-	@./manage-secrets.sh show grafana
-
-secrets-show-n8n:
-	@echo "🔄 Secrets do N8N:"
-	@./manage-secrets.sh show n8n
-
-secrets-show-vaultwarden:
-	@echo "🔒 Secrets do Vaultwarden:"
-	@./manage-secrets.sh show vaultwarden
-
-secrets-backup:
-	@echo "💾 Fazendo backup das secrets..."
-	@./manage-secrets.sh backup
-
-secrets-restore:
-	@echo "🔄 Restaurando backup das secrets..."
-	@./manage-secrets.sh restore
-
-secrets-sync:
-	@echo "🔄 Sincronizando .env com arquivos individuais..."
-	@./manage-secrets.sh sync
 
 # 💾 Backup de dados importantes
 backup:

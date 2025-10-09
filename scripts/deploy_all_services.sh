@@ -28,9 +28,6 @@ services=(
     "vaultwarden"
     "portainer"
     "cloudflared"
-    "harbor"
-    "jenkins"
-    "argocd"
     "jellyfin"
     "qbittorrent"
 )
@@ -61,11 +58,16 @@ deploy_service() {
     
     echo "📦 Deployando $description..."
     
-    # Definir diretório base do script
-    local script_dir="$(cd "$(dirname "$0")" && pwd)"
-    local service_dir="$script_dir/$service_name"
+    # Verificar se o diretório do serviço existe (pasta pai do scripts)
+    local base_dir="$(cd "$(dirname "$0")/.." && pwd)"
+    cd "$base_dir"
     
-    cd "$service_dir"
+    if [ ! -d "$service_name" ]; then
+        echo "❌ ERRO: Diretório $service_name não encontrado"
+        return 1
+    fi
+    
+    cd "$service_name"
     
     if [ ! -f "docker-compose.yml" ]; then
         echo "❌ ERRO: docker-compose.yml não encontrado em $service_name"
@@ -85,7 +87,7 @@ deploy_service() {
     fi
     
     # Voltar para o diretório base
-    cd "$script_dir"
+    cd "$base_dir"
     
     echo ""
 }
