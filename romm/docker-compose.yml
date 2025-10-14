@@ -1,50 +1,77 @@
+---
 services:
   app:
     image: rommapp/romm:latest
-    user: 568:568
     environment:
       - DB_HOST=db
       - DB_NAME=romm
       - DB_USER=romm-user
       - DB_PASSWD_FILE=/run/secrets/romm_db_password
       - ROMM_AUTH_SECRET_KEY_FILE=/run/secrets/romm_auth_secret_key
-      - SCREENSCRAPER_USER_FILE=/run/secrets/romm_screenscraper_user
-      - SCREENSCRAPER_PASSWORD_FILE=/run/secrets/romm_screenscraper_password
-      - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/romm_retroachievements_api_key
-      - STEAMGRIDDB_API_KEY_FILE=/run/secrets/romm_steamgriddb_api_key
       - HASHEOUS_API_ENABLED=true
+      - IGDB_CLIENT_ID_FILE=/run/secrets/romm_igdb_client_id
+      - IGDB_CLIENT_SECRET_FILE=/run/secrets/romm_igdb_client_secret
+      - STEAMGRIDDB_API_KEY_FILE=/run/secrets/romm_steamgriddb_api_key
+      - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/romm_retroachievements_api_key
+      # Alternative providers (optional)
+      # - SCREENSCRAPER_USER_FILE=/run/secrets/romm_screenscraper_user
+      # - SCREENSCRAPER_PASSWORD_FILE=/run/secrets/romm_screenscraper_password
+      # - MOBYGAMES_API_KEY_FILE=/run/secrets/romm_mobygames_api_key
+      # - LAUNCHBOX_API_ENABLED=true
+      # - PLAYMATCH_API_ENABLED=true
     volumes:
-      - /mnt/tank/truenas/resources:/romm/resources
-      - romm_redis_data:/romm/redis-data
-      - /mnt/tank/truenas/roms:/romm/library
-      - /mnt/tank/truenas/assets:/romm/assets
-      - /mnt/tank/truenas/config:/romm/config
-    ports:
-      - 31100:8080
+      - resources_data:/romm/resources
+      - redis_data:/romm/redis-data
+      - library_data:/romm/library
+      - assets_data:/romm/assets
+      - config_data:/romm/config
     secrets:
       - romm_db_password
       - romm_auth_secret_key
-      - romm_screenscraper_user
-      - romm_screenscraper_password
-      - romm_retroachievements_api_key
+      - romm_igdb_client_id
+      - romm_igdb_client_secret
       - romm_steamgriddb_api_key
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
+      - romm_retroachievements_api_key
+      # - romm_screenscraper_user
+      # - romm_screenscraper_password
+      # - romm_mobygames_api_key
+    networks:
+      - retro-network
+      - proxy-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:8080/ || exit 1
+      interval: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
     deploy:
       mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == worker
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
+        delay: 30s
+        max_attempts: 5
+        window: 300s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
       resources:
         limits:
           cpus: "2.0"
-          memory: 4g
-    # networks:
-    #   - default
+          memory: 4G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
 
   db:
     image: mariadb:latest
@@ -54,34 +81,96 @@ services:
       - MARIADB_USER=romm-user
       - MARIADB_PASSWORD_FILE=/run/secrets/romm_db_password
     volumes:
-      - mysql_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
     secrets:
       - romm_db_password
       - romm_db_root_password
+    networks:
+      - retro-network
     healthcheck:
-      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
-      start_period: 30s
-      start_interval: 10s
-      interval: 10s
-      timeout: 5s
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      interval: 30s
+      timeout: 10s
       retries: 5
+      start_period: 60s
     deploy:
       mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
-    # networks:
-    #   - default
+        delay: 30s
+        max_attempts: 5
+        window: 300s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
 
 volumes:
-  mysql_data:
-  romm_redis_data:
+  db_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/romm/db"
+  redis_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/romm/redis"
+  resources_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/romm/resources"
+  library_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/slowbro/library"
+  assets_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/romm/assets"
+  config_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/romm/config"
 
-# networks:
-#   default:
-#     driver: overlay
+networks:
+  retro-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+  proxy-network:
+    external: true
+    name: cloudflared_proxy-network
 
 secrets:
   romm_db_password:
@@ -90,11 +179,18 @@ secrets:
     file: ./romm_db_root_password.txt
   romm_auth_secret_key:
     file: ./romm_auth_secret_key.txt
-  romm_screenscraper_user:
-    file: ./romm_screenscraper_user.txt
-  romm_screenscraper_password:
-    file: ./romm_screenscraper_password.txt
-  romm_retroachievements_api_key:
-    file: ./romm_retroachievements_api_key.txt
+  romm_igdb_client_id:
+    file: ./romm_igdb_client_id.txt
+  romm_igdb_client_secret:
+    file: ./romm_igdb_client_secret.txt
   romm_steamgriddb_api_key:
     file: ./romm_steamgriddb_api_key.txt
+  romm_retroachievements_api_key:
+    file: ./romm_retroachievements_api_key.txt
+  # Optional providers
+  # romm_screenscraper_user:
+  #   file: ./romm_screenscraper_user.txt
+  # romm_screenscraper_password:
+  #   file: ./romm_screenscraper_password.txt
+  # romm_mobygames_api_key:
+  #   file: ./romm_mobygames_api_key.txt
