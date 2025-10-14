@@ -1,0 +1,100 @@
+services:
+  app:
+    image: rommapp/romm:latest
+    user: 568:568
+    environment:
+      - DB_HOST=db
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD_FILE=/run/secrets/romm_db_password
+      - ROMM_AUTH_SECRET_KEY_FILE=/run/secrets/romm_auth_secret_key
+      - SCREENSCRAPER_USER_FILE=/run/secrets/romm_screenscraper_user
+      - SCREENSCRAPER_PASSWORD_FILE=/run/secrets/romm_screenscraper_password
+      - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/romm_retroachievements_api_key
+      - STEAMGRIDDB_API_KEY_FILE=/run/secrets/romm_steamgriddb_api_key
+      - HASHEOUS_API_ENABLED=true
+    volumes:
+      - /mnt/tank/truenas/resources:/romm/resources
+      - romm_redis_data:/romm/redis-data
+      - /mnt/tank/truenas/roms:/romm/library
+      - /mnt/tank/truenas/assets:/romm/assets
+      - /mnt/tank/truenas/config:/romm/config
+    ports:
+      - 31100:8080
+    secrets:
+      - romm_db_password
+      - romm_auth_secret_key
+      - romm_screenscraper_user
+      - romm_screenscraper_password
+      - romm_retroachievements_api_key
+      - romm_steamgriddb_api_key
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4g
+    # networks:
+    #   - default
+
+  db:
+    image: mariadb:latest
+    environment:
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/romm_db_root_password
+      - MARIADB_DATABASE=romm
+      - MARIADB_USER=romm-user
+      - MARIADB_PASSWORD_FILE=/run/secrets/romm_db_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    secrets:
+      - romm_db_password
+      - romm_db_root_password
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      start_period: 30s
+      start_interval: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+    # networks:
+    #   - default
+
+volumes:
+  mysql_data:
+  romm_redis_data:
+
+# networks:
+#   default:
+#     driver: overlay
+
+secrets:
+  romm_db_password:
+    file: ./romm_db_password.txt
+  romm_db_root_password:
+    file: ./romm_db_root_password.txt
+  romm_auth_secret_key:
+    file: ./romm_auth_secret_key.txt
+  romm_screenscraper_user:
+    file: ./romm_screenscraper_user.txt
+  romm_screenscraper_password:
+    file: ./romm_screenscraper_password.txt
+  romm_retroachievements_api_key:
+    file: ./romm_retroachievements_api_key.txt
+  romm_steamgriddb_api_key:
+    file: ./romm_steamgriddb_api_key.txt

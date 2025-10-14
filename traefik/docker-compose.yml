@@ -1,0 +1,127 @@
+---
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --configfile=/etc/traefik/traefik.yml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_config:/etc/traefik
+      - traefik_data:/data
+      - traefik_logs:/var/log/traefik
+    environment:
+      - CF_API_EMAIL_FILE=/run/secrets/cloudflare_email
+      - CF_API_KEY_FILE=/run/secrets/cloudflare_api_key
+      - TRAEFIK_LOG_LEVEL=INFO
+      - TZ=America/Sao_Paulo
+    networks:
+      - proxy-network
+      - cloudflare-proxy
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
+    secrets:
+      - cloudflare_email
+      - cloudflare_api_key
+      - traefik_dashboard_auth
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider http://localhost:8080/ping || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+        preferences:
+          - spread: node.labels.zone
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+        monitor: 30s
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: pause
+        monitor: 30s
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 128M
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.henriqzimer.com.br`)"
+        - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+        - "traefik.http.routers.traefik-dashboard.tls=true"
+        - "traefik.http.routers.traefik-dashboard.tls.certresolver=cloudflare"
+        - "traefik.http.routers.traefik-dashboard.service=api@internal"
+        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-auth"
+        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.usersfile=/run/secrets/traefik_dashboard_auth"
+        - "traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080"
+
+secrets:
+  cloudflare_email:
+    file: ./cloudflare_email.txt
+  cloudflare_api_key:
+    file: ./cloudflare_api_key.txt
+  traefik_dashboard_auth:
+    file: ./traefik_dashboard_auth.txt
+
+volumes:
+  traefik_config:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/traefik/config"
+  traefik_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/traefik/data"
+  traefik_logs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/altaria/docker/traefik/logs"
+
+networks:
+  proxy-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+  cloudflare-proxy:
+    external: true
+    name: cloudflared_proxy-network

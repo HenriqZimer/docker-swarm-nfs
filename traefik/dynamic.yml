@@ -1,0 +1,157 @@
+# Traefik Dynamic Configuration
+http:
+  # Middlewares
+  middlewares:
+    # Redirecionamento para HTTPS
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    
+    # Headers de segurança
+    security-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - OPTIONS
+          - PUT
+          - POST
+          - DELETE
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 100
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+        referrerPolicy: "same-origin"
+        contentTypeNosniff: true
+        browserXssFilter: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+    
+    # Rate limiting
+    rate-limit:
+      rateLimit:
+        average: 100
+        period: 1m
+        burst: 200
+    
+    # Compressão
+    compression:
+      compress: {}
+    
+    # Autenticação básica para serviços administrativos
+    admin-auth:
+      basicAuth:
+        usersFile: "/run/secrets/traefik_dashboard_auth"
+    
+    # IP Whitelist para serviços internos
+    internal-whitelist:
+      ipWhiteList:
+        sourceRange:
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "192.168.0.0/16"
+          - "127.0.0.1/32"
+    
+    # CORS para APIs
+    cors-headers:
+      headers:
+        accessControlAllowCredentials: true
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Requested-With"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+        accessControlAllowOriginList:
+          - "https://henriqzimer.com.br"
+          - "https://*.henriqzimer.com.br"
+        accessControlMaxAge: 100
+    
+    # Chain de middlewares para aplicações web
+    web-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - compression
+          - rate-limit
+    
+    # Chain para APIs
+    api-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - cors-headers
+          - rate-limit
+    
+    # Chain para serviços administrativos
+    admin-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - admin-auth
+          - internal-whitelist
+
+  # Routers adicionais para serviços específicos
+  routers:
+    # Router para metrics do Prometheus
+    prometheus:
+      rule: "Host(`metrics.henriqzimer.com.br`) && Path(`/metrics`)"
+      entryPoints:
+        - websecure
+      service: prometheus@internal
+      middlewares:
+        - admin-chain
+      tls:
+        certResolver: cloudflare
+
+# TLS Configuration
+tls:
+  options:
+    default:
+      sslProtocols:
+        - "TLSv1.2"
+        - "TLSv1.3"
+      cipherSuites:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+      minVersion: "VersionTLS12"
+      maxVersion: "VersionTLS13"
+    
+    # Configuração mais restritiva para serviços críticos
+    strict:
+      sslProtocols:
+        - "TLSv1.3"
+      cipherSuites:
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+        - "TLS_AES_128_GCM_SHA256"
+      curvePreferences:
+        - CurveP521
+        - CurveP384
+      minVersion: "VersionTLS13"
+
+# TCP Services (para proxying TCP)
+tcp:
+  routers: {}
+  services: {}
+
+# UDP Services (para proxying UDP)
+udp:
+  routers: {}
+  services: {}

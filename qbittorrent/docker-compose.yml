@@ -42,8 +42,8 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "4.0"
-          memory: 2G
+          cpus: "2.0"
+          memory: 1G
         reservations:
           cpus: "1.0"
           memory: 512M
@@ -59,8 +59,8 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/downloads"
+      o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
+      device: ":/mnt/slowbro/downloads"
 
 networks:
   media-network:
