@@ -25,35 +25,46 @@ Este diretório contém a configuração do Traefik v3.1 otimizada para Docker S
 Crie os arquivos de secrets com suas credenciais:
 
 ```bash
+
 # Email do Cloudflare
+
 echo "seu-email@dominio.com" > cloudflare_email.txt
 
 # API Key do Cloudflare (Global API Key ou Token com permissões de DNS)
+
 echo "sua-api-key" > cloudflare_api_key.txt
 
 # Autenticação do Dashboard (formato htpasswd)
 # Gerar com: htpasswd -nb admin sua-senha
+
 echo "admin:hash-senha" > traefik_dashboard_auth.txt
-```
+
+```text
 
 ### 2. Deploy do Stack
 
 ```bash
 docker stack deploy -c docker-compose.yml traefik
-```
+
+```text
 
 ### 3. Verificar Status
 
 ```bash
+
 # Ver serviços
+
 docker service ls | grep traefik
 
 # Ver logs
+
 docker service logs -f traefik_traefik
 
 # Ver tarefas
+
 docker service ps traefik_traefik
-```
+
+```text
 
 ## 🌐 Como Expor Serviços
 
@@ -66,21 +77,27 @@ services:
   myapp:
     image: myapp:latest
     networks:
+
       - traefik_proxy-network
+
     deploy:
       labels:
+
         - "traefik.enable=true"
         - "traefik.http.routers.myapp.rule=Host(`myapp.exemplo.com`)"
         - "traefik.http.routers.myapp.entrypoints=websecure"
         - "traefik.http.routers.myapp.tls.certresolver=cloudflare"
         - "traefik.http.services.myapp.loadbalancer.server.port=8080"
-```
+
+
+```text
 
 ### Exemplo com Middlewares
 
 ```yaml
 deploy:
   labels:
+
     - "traefik.enable=true"
     - "traefik.http.routers.myapp.rule=Host(`myapp.exemplo.com`)"
     - "traefik.http.routers.myapp.entrypoints=websecure"
@@ -89,11 +106,14 @@ deploy:
     - "traefik.http.services.myapp.loadbalancer.server.port=8080"
     
     # Configurações de Load Balancer
+
     - "traefik.http.services.myapp.loadbalancer.sticky.cookie=true"
     - "traefik.http.services.myapp.loadbalancer.sticky.cookie.name=lb_cookie"
     - "traefik.http.services.myapp.loadbalancer.healthcheck.path=/health"
     - "traefik.http.services.myapp.loadbalancer.healthcheck.interval=30s"
-```
+
+
+```text
 
 ## 🔒 Middlewares Disponíveis
 
@@ -121,37 +141,47 @@ Os seguintes middlewares estão pré-configurados em `dynamic.yml`:
 ### Uso em Labels
 
 ```yaml
+
 # Usando uma chain
+
 - "traefik.http.routers.myapp.middlewares=web-chain@file"
 
 # Usando múltiplos middlewares
+
 - "traefik.http.routers.myapp.middlewares=security-headers@file,compression@file,rate-limit-medium@file"
-```
+
+
+```text
 
 ## 📊 Monitoramento
 
 ### Dashboard
 
-Acesse o dashboard do Traefik em: `https://traefik.henriqzimer.com.br`
+Acesse o dashboard do Traefik em: `<https://traefik.henriqzimer.com.br`>
 
 Credenciais: definidas em `traefik_dashboard_auth.txt`
 
 ### Métricas Prometheus
 
-As métricas estão disponíveis em: `http://<traefik-ip>:8080/metrics`
+As métricas estão disponíveis em: `<http://<traefik-ip>>:8080/metrics`
 
 Integre com Prometheus adicionando ao `prometheus.yml`:
 
 ```yaml
 scrape_configs:
+
   - job_name: 'traefik'
+
     static_configs:
+
       - targets: ['traefik:8080']
-```
+
+
+```text
 
 ### Health Check
 
-Endpoint de health check: `http://<traefik-ip>:8080/ping`
+Endpoint de health check: `<http://<traefik-ip>>:8080/ping`
 
 ## 🔄 Load Balancing
 
@@ -162,29 +192,37 @@ services:
   myapp:
     image: myapp:latest
     networks:
+
       - traefik_proxy-network
+
     deploy:
       replicas: 3  # 3 réplicas para load balancing
       labels:
+
         - "traefik.enable=true"
         - "traefik.http.routers.myapp.rule=Host(`myapp.exemplo.com`)"
         - "traefik.http.services.myapp.loadbalancer.server.port=8080"
         
         # Algoritmo de load balancing (padrão: round-robin)
         # Opções: wrr (weighted round robin), drr (dynamic round robin)
+
         - "traefik.http.services.myapp.loadbalancer.passhostheader=true"
         
         # Sticky sessions (opcional)
+
         - "traefik.http.services.myapp.loadbalancer.sticky.cookie=true"
         - "traefik.http.services.myapp.loadbalancer.sticky.cookie.name=server_id"
         - "traefik.http.services.myapp.loadbalancer.sticky.cookie.secure=true"
         - "traefik.http.services.myapp.loadbalancer.sticky.cookie.httpOnly=true"
         
         # Health checks
+
         - "traefik.http.services.myapp.loadbalancer.healthcheck.path=/health"
         - "traefik.http.services.myapp.loadbalancer.healthcheck.interval=10s"
         - "traefik.http.services.myapp.loadbalancer.healthcheck.timeout=3s"
-```
+
+
+```text
 
 ## 🛡️ Segurança
 
@@ -199,6 +237,7 @@ services:
 ### Headers de Segurança
 
 Todos os middlewares incluem headers de segurança:
+
 - HSTS (HTTP Strict Transport Security)
 - X-Content-Type-Options
 - X-Frame-Options
@@ -209,6 +248,7 @@ Todos os middlewares incluem headers de segurança:
 ### Rate Limiting
 
 Proteção contra DDoS e abuso com diferentes níveis:
+
 - Estrito: 50 req/min
 - Médio: 100 req/min
 - Relaxado: 200 req/min
@@ -219,17 +259,22 @@ Proteção contra DDoS e abuso com diferentes níveis:
 
 ```bash
 docker service logs -f traefik_traefik
-```
+
+```text
 
 ### Ver configuração atual
 
 ```bash
+
 # Acessar container
+
 docker exec -it $(docker ps -q -f name=traefik_traefik) sh
 
 # Ver configuração
+
 cat /etc/traefik/dynamic.yml
-```
+
+```text
 
 ### Certificados SSL não gerando
 
@@ -247,15 +292,20 @@ cat /etc/traefik/dynamic.yml
 ### Testar conectividade
 
 ```bash
+
 # Testar HTTP redirect
-curl -I http://seu-dominio.com
+
+curl -I <http://seu-dominio.com>
 
 # Testar HTTPS
-curl -I https://seu-dominio.com
+
+curl -I <https://seu-dominio.com>
 
 # Verificar certificado
+
 openssl s_client -connect seu-dominio.com:443 -servername seu-dominio.com
-```
+
+```text
 
 ## 📚 Recursos Adicionais
 
@@ -277,10 +327,14 @@ openssl s_client -connect seu-dominio.com:443 -servername seu-dominio.com
 Para atualizar o Traefik:
 
 ```bash
+
 # Atualizar a imagem no docker-compose.yml
 # Depois fazer o update do serviço
+
 docker service update --image traefik:v3.2 traefik_traefik
 
 # Ou redesploy do stack
+
 docker stack deploy -c docker-compose.yml traefik
-```
+
+```text

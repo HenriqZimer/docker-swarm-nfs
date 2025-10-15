@@ -14,7 +14,7 @@ O Zabbix é uma plataforma de monitoramento empresarial:
 
 ## 🏗️ Arquitetura do Deployment
 
-```
+```text
 ┌─────────────────────┐    ┌─────────────────────┐
 │   Zabbix Server     │    │   PostgreSQL DB     │
 │   (Core Engine)     │◄──►│   (Métricas/Config) │
@@ -27,17 +27,20 @@ O Zabbix é uma plataforma de monitoramento empresarial:
 │   (Interface)       │    │   (Coleta Dados)    │
 │   Port: 8080        │◄──►│   Port: 10050       │
 └─────────────────────┘    └─────────────────────┘
-```
+
+```text
 
 ## 🔐 Configuração de Secrets
 
 ### Arquivo: `zabbix_db_password.txt`
+
 **Descrição**: Senha do banco PostgreSQL do Zabbix
 **Exemplo**:
 
 ```text
 Zabbix2024!DatabaseP@ss
-```
+
+```text
 
 **Recomendações**:
 
@@ -47,35 +50,48 @@ Zabbix2024!DatabaseP@ss
 - Use gerador de senhas seguro
 
 **Formato de senha segura**:
+
+
 ```text
+
 # Exemplo de senha forte
+
 Zb$2024!Secure#DB&Pass
-```
+
+```text
 
 ## 🚀 Comandos Úteis
 
 ```bash
+
 # Ver secrets do Zabbix
+
 make secrets-show-zabbix
 
 # Acessar logs
+
 make logs-zabbix
 
 # Restart do serviço
+
 make stop-zabbix && make deploy-zabbix
 
 # Verificar conectividade com agents
+
 zabbix_get -s [agent_host] -k system.cpu.load
-```
+
+```text
 
 ## 🔧 Configuração Inicial
 
 ### 1. Primeiro Acesso
-- URL: `https://zabbix.empresa.com.br/`
+
+- URL: `<https://zabbix.empresa.com.br/`>
 - Usuário padrão: `Admin`
 - Senha padrão: `zabbix`
 
 ### 2. Setup Inicial Obrigatório
+
 1. **Alterar senha do Admin**:
    - Administration > Users > Admin
    - Trocar senha padrão
@@ -91,58 +107,76 @@ zabbix_get -s [agent_host] -k system.cpu.load
 ### 3. Configurações Essenciais
 
 #### Email/SMTP Configuration
+
 ```bash
+
 # Via interface web:
 # Administration > Media types > Email
 # SMTP server: smtp.office365.com
 # SMTP port: 587
 # Security: STARTTLS
 # Authentication: Username and password
-```
+
+```text
 
 #### Descoberta de Rede
+
 ```bash
+
 # Configuration > Discovery rules
 # Adicionar ranges de IP para descoberta automática
 # Exemplo: 192.168.1.1-254
-```
+
+```text
 
 ## 🖥️ Instalação de Agents
 
 ### Linux Agent (Ubuntu/Debian)
+
 ```bash
+
 # Instalar repositório
-wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu22.04_all.deb
+
+wget <https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-2+ubuntu22.04_all.deb>
 sudo dpkg -i zabbix-release_7.0-2+ubuntu22.04_all.deb
 sudo apt update
 
 # Instalar agent
+
 sudo apt install zabbix-agent2
 
 # Configurar
+
 sudo nano /etc/zabbix/zabbix_agent2.conf
+
 # Server=IP_DO_ZABBIX_SERVER
 # ServerActive=IP_DO_ZABBIX_SERVER
 # Hostname=nome-do-servidor
 
 # Iniciar serviço
+
 sudo systemctl enable zabbix-agent2
 sudo systemctl start zabbix-agent2
-```
+
+```text
 
 ### Windows Agent
+
 ```powershell
+
 # Download do site oficial
-# https://www.zabbix.com/download_agents
+# <https://www.zabbix.com/download_agents>
 
 # Configurar via interface gráfica ou:
 # C:\Program Files\Zabbix Agent 2\zabbix_agent2.conf
 # Server=IP_DO_ZABBIX_SERVER
 # ServerActive=IP_DO_ZABBIX_SERVER
 # Hostname=nome-do-servidor
-```
+
+```text
 
 ### Docker Agent
+
 ```yaml
 version: '3.8'
 services:
@@ -153,16 +187,20 @@ services:
       ZBX_SERVER_PORT: "10051"
       ZBX_HOSTNAME: "docker-host"
     volumes:
+
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /dev:/host/dev:ro
+
     privileged: true
     pid: host
-```
+
+```text
 
 ## 📊 Templates e Monitoramento
 
 ### Templates Padrão
+
 - **Linux by Zabbix agent**: Monitoramento básico Linux
 - **Windows by Zabbix agent**: Monitoramento básico Windows
 - **Docker by Zabbix agent 2**: Containers Docker
@@ -173,87 +211,117 @@ services:
 ### Métricas Importantes
 
 #### Sistema Operacional
+
 ```bash
+
 # CPU
+
 system.cpu.load[all,avg1]
 system.cpu.util[,user,avg1]
 
 # Memória
+
 vm.memory.size[total]
 vm.memory.size[available]
 
 # Disco
+
 vfs.fs.size[/,total]
 vfs.fs.size[/,used]
 
 # Rede
+
 net.if.in[eth0]
 net.if.out[eth0]
-```
+
+```text
 
 #### Aplicações
+
 ```bash
+
 # Processos
+
 proc.num[nginx]
 proc.cpu.util[nginx]
 
 # Logs
+
 log[/var/log/nginx/access.log,ERROR]
 
 # Portas
+
 net.tcp.listen[80]
 net.tcp.listen[443]
-```
+
+```text
 
 ## 🚨 Configuração de Alertas
 
 ### 1. Media Types (Email)
+
 ```bash
+
 # Administration > Media types
 # Criar novo media type para Email/Slack/SMS
-```
+
+```text
 
 ### 2. Users e User Groups
+
 ```bash
+
 # Administration > User groups
 # Criar grupos: Admins, Operadores, etc.
 # Definir permissões por grupo
-```
+
+```text
 
 ### 3. Actions
+
 ```bash
+
 # Configuration > Actions > Trigger actions
 # Condições: Por severity, por host group, etc.
 # Operações: Enviar email, executar script, etc.
-```
+
+```text
 
 ### Exemplo de Trigger
+
 ```bash
+
 # Nome: High CPU usage
 # Expression: last(/Linux/system.cpu.util[,user,avg1])>80
 # Severity: High
 # Description: CPU usage is above 80% for 5 minutes
-```
+
+```text
 
 ## 📈 Dashboards
 
 ### Dashboard Global
+
 - **Problems**: Problemas atuais
 - **System status**: Status geral do Zabbix
 - **Host availability**: Disponibilidade dos hosts
 - **Top triggers**: Triggers mais frequentes
 
 ### Dashboard Personalizado
+
 ```bash
+
 # Monitoring > Dashboard
 # Adicionar widgets:
 # - Graph (CPU, Memory, Disk)
 # - Plain text (Status)
 # - Problems (Alertas)
 # - Map (Topologia)
-```
+
+```text
 
 ### Widgets Úteis
+
 - **Graph**: Gráficos de métricas
 - **Problems**: Lista de problemas
 - **Data overview**: Visão geral de dados
@@ -263,7 +331,9 @@ net.tcp.listen[443]
 ## 🔧 Manutenção e Performance
 
 ### Housekeeping
+
 ```sql
+
 -- Configurar retenção de dados
 -- Administration > General > Housekeeping
 
@@ -271,11 +341,16 @@ net.tcp.listen[443]
 -- Trends: 365 dias
 -- Events: 365 dias
 -- Audit: 365 dias
-```
+
+
+```text
 
 ### Otimização do Banco
+
 ```sql
+
 -- Verificar tamanho das tabelas
+
 SELECT 
     schemaname,
     tablename,
@@ -285,12 +360,17 @@ WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 
 -- Fazer VACUUM regularmente
+
 VACUUM ANALYZE;
-```
+
+```text
 
 ### Performance Tuning
+
 ```bash
+
 # zabbix_server.conf
+
 StartPollers=30
 StartPingers=10
 StartTrappers=10
@@ -298,70 +378,95 @@ StartHTTPPollers=5
 CacheSize=128M
 HistoryCacheSize=64M
 TrendCacheSize=32M
-```
+
+```text
 
 ## 🛡️ Segurança
 
 ### Autenticação
+
 - **Frontend**: LDAP, SAML, HTTP auth
 - **API**: Token-based authentication
 - **Agent**: PSK (Pre-Shared Keys)
 
 ### Configuração PSK
+
 ```bash
+
 # Gerar chave PSK
+
 openssl rand -hex 32 > /etc/zabbix/zabbix_agent2.psk
 
 # zabbix_agent2.conf
+
 TLSConnect=psk
 TLSAccept=psk
 TLSPSKIdentity=PSK_ID_001
 TLSPSKFile=/etc/zabbix/zabbix_agent2.psk
-```
+
+```text
 
 ### User Permissions
+
 ```bash
+
 # Administration > User groups
 # Definir permissões granulares:
 # - Host groups
 # - Template access
 # - Frontend access
-```
+
+```text
 
 ## 🔍 Troubleshooting
 
 ### Problemas Comuns
 
 **Agent não conecta**:
+
+
 ```bash
+
 # Verificar firewall
+
 sudo ufw allow 10050/tcp
 
 # Testar conectividade
+
 telnet zabbix_server 10051
 
 # Verificar logs
+
 tail -f /var/log/zabbix/zabbix_agent2.log
-```
+
+```text
 
 **Performance lenta**:
+
+
 ```bash
+
 # Verificar cache hits
 # Administration > Queue
 # Verificar items em fila
 
 # Ajustar configurações
 # Administration > General > Other
-```
+
+```text
 
 **Banco de dados crescendo**:
+
+
 ```bash
+
 # Verificar housekeeping
 # Administration > General > Housekeeping
 
 # Executar limpeza manual
 # Administration > Queue > Housekeeping
-```
+
+```text
 
 ## 📚 Links Úteis
 

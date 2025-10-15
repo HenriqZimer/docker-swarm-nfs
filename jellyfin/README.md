@@ -7,15 +7,18 @@ O Jellyfin é um servidor de mídia livre e de código aberto que permite organi
 ## 🚀 Deploy
 
 ```bash
+
 # Deploy do serviço
+
 docker stack deploy -c docker-compose.yml jellyfin
-```
+
+```text
 
 ## 🔧 Configuração
 
 ### Acesso Inicial
 
-- **URL**: http://localhost:8096
+- **URL**: <http://localhost:8096>
 - **Setup inicial**: Siga o assistente de configuração na primeira execução
 - **Sem necessidade de conta externa** (diferente do Plex)
 
@@ -27,7 +30,7 @@ docker stack deploy -c docker-compose.yml jellyfin
 
 ## 🌐 Acesso
 
-- **URL Local**: http://localhost:8096
+- **URL Local**: <http://localhost:8096>
 - **URL Externa**: Configure no Cloudflare Tunnel
 - **HTTPS**: 8920 (opcional)
 - **DLNA**: 1900/udp, 7359/udp
@@ -35,7 +38,7 @@ docker stack deploy -c docker-compose.yml jellyfin
 ## 📋 Configuração Inicial
 
 1. **Primeiro Acesso**:
-   - Acesse http://localhost:8096
+   - Acesse <http://localhost:8096>
    - Crie conta de administrador
    - Configure idioma (Português)
 
@@ -55,7 +58,7 @@ docker stack deploy -c docker-compose.yml jellyfin
 
 Para melhor organização, configure no qBittorrent:
 
-```
+```text
 /downloads/
 ├── incomplete/          # Downloads em andamento
 ├── complete/           # Downloads finalizados
@@ -63,7 +66,8 @@ Para melhor organização, configure no qBittorrent:
 │   ├── tv-shows/       # Séries de TV
 │   └── music/          # Música
 └── watch/              # Pasta monitorada (opcional)
-```
+
+```text
 
 ### Configuração no qBittorrent
 
@@ -81,18 +85,24 @@ Para melhor organização, configure no qBittorrent:
 ## 🔧 Manutenção
 
 ```bash
+
 # Ver logs
+
 docker service logs jellyfin_app
 
 # Restart do serviço
+
 docker service update --force jellyfin_app
 
 # Parar serviço
+
 docker stack rm jellyfin
 
 # Limpar cache (se necessário)
+
 docker exec -it $(docker ps -q -f name=jellyfin) rm -rf /cache/*
-```
+
+```text
 
 ## 📊 Recursos
 
@@ -133,10 +143,15 @@ Para automatizar downloads e organização:
 ### Problemas Comuns
 
 **Jellyfin não detecta novos arquivos:**
+
+
 ```bash
+
 # Forçar rescan da biblioteca
-curl -X POST "http://localhost:8096/Library/Refresh"
-```
+
+curl -X POST "<http://localhost:8096/Library/Refresh">
+
+```text
 
 **Problemas de transcodificação:**
 - Verificar se há recursos suficientes (CPU/RAM)

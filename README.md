@@ -11,7 +11,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ## 🏗️ Arquitetura da Infraestrutura
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     🌐 CLOUDFLARE EDGE
 │              (DDoS Protection, SSL, CDN, WAF)                   │
@@ -57,7 +57,8 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 │  │  • /*/db             - Bancos de Dados                      │  │
 │  └─────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────  ┘
-```
+
+```text
 
 ## 🛠️ Stack de Tecnologias
 
@@ -104,7 +105,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 📊 Grafana - Dashboards e Analytics
 
-- **URL**: `https://grafana.empresa.com.br`
+- **URL**: `<https://grafana.empresa.com.br`>
 - **Funcionalidades**:
   - Dashboards personalizáveis
   - Alertas em tempo real
@@ -114,7 +115,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 🔄 N8N - Automação de Workflows
 
-- **URL**: `https://n8n.empresa.com.br`
+- **URL**: `<https://n8n.empresa.com.br`>
 - **Funcionalidades**:
   - Automação visual de processos
   - Integração com 300+ APIs
@@ -124,7 +125,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 🔐 Vaultwarden - Gerenciador de Senhas
 
-- **URL**: `https://vault.empresa.com.br`
+- **URL**: `<https://vault.empresa.com.br`>
 - **Funcionalidades**:
   - Cofre de senhas criptografado
   - Sincronização entre dispositivos
@@ -134,7 +135,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 🐳 Portainer - Gerenciamento Docker
 
-- **URL**: `https://portainer.empresa.com.br`
+- **URL**: `<https://portainer.empresa.com.br`>
 - **Funcionalidades**:
   - Interface web para Docker Swarm
   - Deploy via templates
@@ -144,7 +145,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 📈 Zabbix - Monitoramento Completo
 
-- **URL**: `https://zabbix.empresa.com.br`
+- **URL**: `<https://zabbix.empresa.com.br`>
 - **Funcionalidades**:
   - Monitoramento de infraestrutura
   - Coleta de métricas em tempo real
@@ -154,7 +155,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 🚢 Harbor - Registry Docker e Helm
 
-- **URL**: `https://harbor.empresa.com.br`
+- **URL**: `<https://harbor.empresa.com.br`>
 - **Funcionalidades**:
   - Registry Docker empresarial
   - Gerenciamento de Helm Charts
@@ -166,7 +167,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### ⚙️ Jenkins - CI/CD Pipeline
 
-- **URL**: `https://jenkins.empresa.com.br`
+- **URL**: `<https://jenkins.empresa.com.br`>
 - **Funcionalidades**:
   - Pipelines de CI/CD automatizados
   - Integração com Git e Docker
@@ -178,7 +179,7 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 
 ### 🚀 ArgoCD - GitOps Continuous Delivery
 
-- **URL**: `https://argocd.empresa.com.br`
+- **URL**: `<https://argocd.empresa.com.br`>
 - **Funcionalidades**:
   - GitOps workflow nativo
   - Sincronização automática com Git
@@ -195,10 +196,12 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 #### 1. Configuração de Datasets
 
 ```bash
+
 # No TrueNAS Web UI:
 # Storage > Pools > [pool] > Add Dataset
 
 # Datasets recomendados:
+
 /mnt/pool/docker-swarm/
 ├── grafana/
 ├── n8n/
@@ -208,41 +211,51 @@ Este projeto implementa uma infraestrutura completa de serviços usando **Docker
 ├── harbor/
 ├── jenkins/
 └── argocd/
-```
+
+```text
 
 #### 2. Configuração de Shares NFS
 
 ```bash
+
 # Sharing > Unix (NFS) Shares
 # Path: /mnt/pool/docker-swarm
 # Network: 192.168.1.0/24
 # Options: rw,sync,no_root_squash
-```
+
+```text
 
 #### 3. Serviços Necessários
 
 ```bash
+
 # Services > NFS
 # Enable: ✅ Start Automatically
 # NFSv4: ✅ Enable
 # Bind IP: 192.168.1.105
-```
+
+```text
 
 ### Configuração no Docker Swarm
 
 #### 1. Teste de Conectividade
 
 ```bash
+
 # Testar montagem NFS
+
 sudo mount -t nfs 192.168.1.105:/mnt/pool/docker-swarm /tmp/test
 ls -la /tmp/test
 sudo umount /tmp/test
-```
+
+```text
 
 #### 2. Volumes Docker
 
 ```yaml
+
 # Exemplo de volume NFS no docker-compose.yml
+
 volumes:
   grafana_data:
     driver: local
@@ -250,7 +263,8 @@ volumes:
       type: nfs
       o: addr=truenas-scale,rw,nfsvers=4
       device: ":/mnt/pool/docker-swarm/grafana"
-```
+
+```text
 
 ## 🔐 Gerenciamento de Secrets
 
@@ -259,7 +273,9 @@ volumes:
 O projeto utiliza um sistema centralizado de secrets com o arquivo `.env`:
 
 ```bash
+
 # Estrutura de secrets por serviço
+
 GRAFANA_ADMIN_PASSWORD=GrafanaAdmin123!
 GRAFANA_DB_PASSWORD=GrafanaDB2024!
 N8N_AUTH_PASSWORD=N8nAuth2024!
@@ -267,24 +283,31 @@ VAULTWARDEN_ADMIN_TOKEN=vault-admin-token-hash
 PORTAINER_ADMIN_PASSWORD=portainer-bcrypt-hash
 ZABBIX_DB_PASSWORD=ZabbixDB2024!
 CLOUDFLARED_TUNNEL_TOKEN=cloudflare-tunnel-token
-```
+
+```text
 
 ### Comandos Make para Secrets
 
 ```bash
+
 # Ver todas as secrets
+
 make secrets-show
 
 # Ver secrets específicas
+
 make secrets-show-grafana
 make secrets-show-n8n
 
 # Backup das secrets
+
 make secrets-backup
 
 # Sincronizar secrets com Docker
+
 make secrets-sync
-```
+
+```text
 
 ## 📦 Deploy e Gerenciamento
 
@@ -293,45 +316,59 @@ make secrets-sync
 #### Deploy de Serviços
 
 ```bash
+
 # Deploy completo
+
 make deploy-all
 
 # Deploy individual
+
 make deploy-grafana
 make deploy-n8n
 make deploy-vaultwarden
 make deploy-portainer
 make deploy-zabbix
 make deploy-cloudflared
-```
+
+```text
 
 #### Gerenciamento
 
 ```bash
+
 # Parar serviços
+
 make stop-all
 make stop-grafana
 
 # Ver logs
+
 make logs-grafana
 make logs-n8n
 
 # Status do cluster
+
 make status
-```
+
+```text
 
 #### Manutenção
 
 ```bash
+
 # Backup completo
+
 make backup
 
 # Update de imagens
+
 make update-all
 
 # Limpeza do sistema
+
 make cleanup
-```
+
+```text
 
 ## 🌐 Configuração de DNS e Acesso
 
@@ -339,54 +376,65 @@ make cleanup
 
 | Serviço     | URL                              | Credenciais Padrão   |
 | ----------- | -------------------------------- | -------------------- |
-| Grafana     | https://grafana.empresa.com.br   | admin / (ver secret) |
-| N8N         | https://n8n.empresa.com.br       | Basic Auth           |
-| Vaultwarden | https://vault.empresa.com.br     | Criar conta          |
-| Portainer   | https://portainer.empresa.com.br | admin / (ver secret) |
-| Zabbix      | https://zabbix.empresa.com.br    | Admin / zabbix       |
-| Harbor      | https://harbor.empresa.com.br    | admin / Harbor123!   |
-| Jenkins     | https://jenkins.empresa.com.br   | admin / Jenkins123!  |
-| ArgoCD      | https://argocd.empresa.com.br    | admin / ArgoCD123!   |
+| Grafana     | <https://grafana.empresa.com.br>   | admin / (ver secret) |
+| N8N         | <https://n8n.empresa.com.br>       | Basic Auth           |
+| Vaultwarden | <https://vault.empresa.com.br>     | Criar conta          |
+| Portainer   | <https://portainer.empresa.com.br> | admin / (ver secret) |
+| Zabbix      | <https://zabbix.empresa.com.br>    | Admin / zabbix       |
+| Harbor      | <https://harbor.empresa.com.br>    | admin / Harbor123!   |
+| Jenkins     | <https://jenkins.empresa.com.br>   | admin / Jenkins123!  |
+| ArgoCD      | <https://argocd.empresa.com.br>    | admin / ArgoCD123!   |
 
 ## 🔧 Configuração Inicial
 
 ### 1. Pré-requisitos
 
 ```bash
+
 # Docker Swarm inicializado
+
 docker swarm init
 
 # TrueNAS configurado com NFS
 # Cloudflare com domínio adicionado
 # Arquivo .env configurado
-```
+
+```text
 
 ### 2. Clone e Setup
 
 ```bash
-git clone https://github.com/HenriqZimer/docker-swarm.git
+git clone <https://github.com/HenriqZimer/docker-swarm.git>
 cd docker-swarm
 
 # Configurar secrets
+
 cp .env.example .env
 nano .env
 
 # Carregar secrets
+
 make secrets-sync
-```
+
+```text
 
 ### 3. Deploy Completo
 
 ```bash
+
 # Deploy de todos os serviços
+
 make deploy-all
 
 # Verificar status
+
 make status
 
 # Verificar logs se necessário
+
 make logs-grafana
-```
+
+```text
 
 ## 🛡️ Segurança e Backup
 
@@ -402,15 +450,18 @@ make logs-grafana
 ### Estratégia de Backup
 
 ```bash
+
 # Backup automático via TrueNAS
 # - Snapshots ZFS a cada hora
 # - Retenção: 24 horas, 7 dias, 4 semanas
 # - Replicação para storage externo
 
 # Backup manual via Make
+
 make backup  # Dados + configurações
 make secrets-backup  # Apenas secrets
-```
+
+```text
 
 ### Monitoramento
 
@@ -440,42 +491,57 @@ make secrets-backup  # Apenas secrets
 #### Serviços não iniciam
 
 ```bash
+
 # Verificar secrets
+
 make secrets-show
 
 # Verificar logs
+
 docker service logs [service_name]
 
 # Verificar conectividade NFS
+
 mount -t nfs 192.168.1.105:/mnt/pool/docker-swarm /tmp/test
-```
+
+```text
 
 #### Performance lenta
 
 ```bash
+
 # Verificar recursos
+
 docker stats
 
 # Verificar storage NFS
+
 df -h
 iostat -x 1
 
 # Verificar rede
+
 iperf3 -c 192.168.1.105
-```
+
+```text
 
 #### Problemas de acesso
 
 ```bash
+
 # Verificar tunnel Cloudflare
+
 docker service logs cloudflared_tunnel
 
 # Verificar DNS
+
 nslookup grafana.empresa.com.br
 
 # Verificar SSL
-curl -I https://grafana.empresa.com.br
-```
+
+curl -I <https://grafana.empresa.com.br>
+
+```text
 
 ## 📚 Documentação Adicional
 

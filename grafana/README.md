@@ -3,6 +3,7 @@
 ## 🔍 O que é o Grafana?
 
 O Grafana é uma plataforma de observabilidade e visualização de dados que permite:
+
 - Criar dashboards interativos e informativos
 - Conectar múltiplas fontes de dados (Prometheus, InfluxDB, PostgreSQL, etc.)
 - Configurar alertas baseados em métricas
@@ -11,7 +12,7 @@ O Grafana é uma plataforma de observabilidade e visualização de dados que per
 
 ## 🏗️ Arquitetura do Deployment
 
-```
+```text
 ┌─────────────────────┐    ┌─────────────────────┐
 │   Grafana App       │    │   PostgreSQL DB     │
 │   (Dashboard)       │◄──►│   (Configurações)   │
@@ -24,117 +25,165 @@ O Grafana é uma plataforma de observabilidade e visualização de dados que per
 │   (Notificações)    │
 │   smtp.office365.com│
 └─────────────────────┘
-```
+
+```text
 
 ## 🔐 Configuração de Secrets
 
 ### Arquivo: `grafana_admin_password.txt`
+
 **Descrição**: Senha do usuário administrador padrão do Grafana
 **Exemplo**:
-```
+
+
+```text
 MinhaSenh@Super5egur@123
-```
+
+```text
+
 **Recomendações**:
 - Use no mínimo 12 caracteres
 - Combine letras, números e símbolos
 - Evite senhas óbvias ou dicionário
 
 ### Arquivo: `grafana_secret_key.txt`
+
 **Descrição**: Chave secreta para criptografia de sessões e cookies
 **Exemplo**:
-```
+
+
+```text
 SW2YcwTIb9zpOOhoPsMm
-```
+
+```text
+
 **Recomendações**:
 - String aleatória de 20+ caracteres
 - Use geradores de senha seguros
 - Nunca reutilize em outros serviços
 
 ### Arquivo: `grafana_db_password.txt`
+
 **Descrição**: Senha do banco PostgreSQL do Grafana
 **Exemplo**:
-```
+
+
+```text
 GrafanaDB#2024$Secure
-```
+
+```text
+
 **Recomendações**:
 - Diferente da senha de admin
 - Use caracteres especiais
 - Mantenha complexidade alta
 
 ### Arquivo: `grafana_smtp_host.txt`
+
 **Descrição**: Servidor SMTP para envio de emails
 **Exemplo**:
-```
+
+
+```text
 smtp.gmail.com:587
 smtp.office365.com:587
 smtp.empresa.com.br:587
-```
+
+```text
+
 **Formatos aceitos**:
 - `servidor:porta`
 - Porta 587 (STARTTLS) ou 465 (SSL)
 
 ### Arquivo: `grafana_smtp_username.txt`
+
 **Descrição**: Nome de exibição para emails enviados
 **Exemplo**:
-```
+
+
+```text
 Grafana Monitoramento
 Sistema de Alertas
 Grafana Empresa
-```
+
+```text
 
 ### Arquivo: `grafana_smtp_password.txt`
+
 **Descrição**: Senha ou token de aplicativo para SMTP
 **Exemplo**:
-```
+
+
+```text
 MinhaSenh@Email123
 xyzw abcd efgh ijkl
-```
+
+```text
+
 **Para Office365/Gmail**:
 - Use senhas de aplicativo específicas
 - Não use senha principal da conta
 
 ### Arquivo: `grafana_smtp_email.txt`
+
 **Descrição**: Endereço de email remetente
 **Exemplo**:
-```
+
+
+```text
 grafana@empresa.com.br
 monitoramento@meudominio.com
 alertas@organizacao.org
-```
+
+```text
 
 ### Arquivo: `grafana_domain.txt`
+
 **Descrição**: Domínio principal do Grafana
 **Exemplo**:
-```
+
+
+```text
 grafana.empresa.com.br
 monitoring.meusite.com
 dashboards.organizacao.org
-```
+
+```text
 
 ### Arquivo: `grafana_domain_url.txt`
+
 **Descrição**: URL completa de acesso ao Grafana
 **Exemplo**:
-```
-https://grafana.empresa.com.br
-https://monitoring.meusite.com
-https://dashboards.organizacao.org
-```
+
+
+```text
+<https://grafana.empresa.com.br>
+<https://monitoring.meusite.com>
+<https://dashboards.organizacao.org>
+
+```text
 
 ## 🚀 Comandos Úteis
 
 ```bash
+
 # Ver secrets do Grafana
+
 make secrets-show-grafana
 
 # Acessar logs
+
 make logs-grafana
 
 # Restart do serviço
+
 make stop-grafana && make deploy-grafana
 
 # Backup das configurações
+
 make backup
-```
+
+```text
 
 ## 🔧 Configuração Inicial
 
@@ -144,7 +193,7 @@ make backup
    - Senha: Valor de `grafana_admin_password.txt`
 
 2. **Configurar Data Sources**:
-   - Prometheus: `http://prometheus:9090`
+   - Prometheus: `<http://prometheus:9090`>
    - PostgreSQL: Configurar conforme necessário
 
 3. **Importar Dashboards**:
@@ -154,6 +203,7 @@ make backup
 ## 📧 Configuração de Alertas
 
 O SMTP está configurado para enviar notificações:
+
 - **Remetente**: Valor de `grafana_smtp_email.txt`
 - **Nome**: Valor de `grafana_smtp_username.txt`
 - **Servidor**: Valor de `grafana_smtp_host.txt`

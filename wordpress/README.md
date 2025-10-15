@@ -278,12 +278,16 @@ You can customize these in a `.env` file:
 To backup your WordPress:
 
 ```bash
+
 # Backup database
+
 docker exec wordpress-db mysqldump -u root -p[ROOT_PASSWORD] wordpress > backup.sql
 
 # Backup files
+
 docker cp wordpress:/var/www/html ./wordpress-backup
-```
+
+```text
 
 ## Security Notes
 

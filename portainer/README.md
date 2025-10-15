@@ -14,7 +14,7 @@ O Portainer é uma plataforma de gerenciamento para Docker e Kubernetes:
 
 ## 🏗️ Arquitetura do Deployment
 
-```
+```text
 ┌─────────────────────┐    ┌─────────────────────┐
 │   Portainer         │    │   Docker Socket     │
 │   (Management UI)   │◄──►│   (Container Mgmt)  │
@@ -27,30 +27,38 @@ O Portainer é uma plataforma de gerenciamento para Docker e Kubernetes:
 │   (Swarm Nodes)     │
 │   Port: 9001        │
 └─────────────────────┘
-```
+
+```text
 
 ## 🔐 Configuração de Secrets
 
 ### Arquivo: `portainer_admin_password.txt`
+
 **Descrição**: Senha hash para o usuário admin do Portainer
 **Exemplo**:
 
 ```text
 $2b$12$randomhashexamplehere1234567890abcdef
-```
+
+```text
 
 **Como gerar**:
 
 ```bash
+
 # Método 1: htpasswd (recomendado)
+
 htpasswd -nbB admin "MinhaSenh@Admin123" | cut -d ":" -f 2
 
 # Método 2: Usando Docker
+
 docker run --rm httpd:alpine htpasswd -nbB admin "MinhaSenh@Admin123" | cut -d ":" -f 2
 
 # Método 3: Python
+
 python3 -c "import bcrypt; print(bcrypt.hashpw(b'MinhaSenh@Admin123', bcrypt.gensalt()).decode())"
-```
+
+```text
 
 **Recomendações**:
 
@@ -62,32 +70,41 @@ python3 -c "import bcrypt; print(bcrypt.hashpw(b'MinhaSenh@Admin123', bcrypt.gen
 ## 🚀 Comandos Úteis
 
 ```bash
+
 # Ver secrets do Portainer
+
 make secrets-show-portainer
 
 # Acessar logs
+
 make logs-portainer
 
 # Restart do serviço
+
 make stop-portainer && make deploy-portainer
 
 # Verificar agentes conectados
+
 docker service ls | grep portainer
-```
+
+```text
 
 ## 🔧 Configuração Inicial
 
 ### 1. Primeiro Acesso
-- URL: `https://portainer.empresa.com.br:9443/`
+
+- URL: `<https://portainer.empresa.com.br:9443/`>
 - Usuário: `admin`
 - Senha: A senha original usada para gerar o hash
 
 ### 2. Configuração do Environment
+
 - **Local**: Docker local (automático)
 - **Docker Swarm**: Cluster atual (automático)
 - **Remote**: Adicionar outros Docker hosts
 
 ### 3. Configurações Importantes
+
 - **Settings > Authentication**: Configurar LDAP/OAuth se necessário
 - **Settings > Registries**: Adicionar registries privados
 - **Settings > Teams**: Criar equipes e roles
@@ -98,10 +115,12 @@ docker service ls | grep portainer
 ### Usuários Locais
 
 ```bash
+
 # Via interface web:
 # Users > Add user
 # Definir: Username, Password, Role
-```
+
+```text
 
 ### Teams e Roles
 
@@ -119,6 +138,7 @@ docker service ls | grep portainer
 ## 🏗️ Templates e Deploy
 
 ### App Templates
+
 - WordPress
 - MySQL/PostgreSQL
 - Nginx
@@ -127,19 +147,26 @@ docker service ls | grep portainer
 - E muitos outros...
 
 ### Stacks (Docker Compose)
+
 ```yaml
+
 # Exemplo de stack personalizada
+
 version: '3.8'
 services:
   app:
     image: nginx:latest
     ports:
+
       - "8080:80"
+
     deploy:
       replicas: 2
-```
+
+```text
 
 ### Custom Templates
+
 ```json
 {
   "type": 3,
@@ -147,17 +174,19 @@ services:
   "description": "Aplicação personalizada",
   "categories": ["web"],
   "platform": "linux",
-  "logo": "https://...",
+  "logo": "<https://...",>
   "repository": {
-    "url": "https://github.com/user/repo",
+    "url": "<https://github.com/user/repo",>
     "stackfile": "docker-compose.yml"
   }
 }
-```
+
+```text
 
 ## 📊 Monitoramento e Logs
 
 ### Dashboard Principal
+
 - **Containers**: Status e estatísticas
 - **Services**: Health checks e replicas
 - **Nodes**: CPU, Memory, Disk usage
@@ -165,16 +194,21 @@ services:
 - **Volumes**: Utilização de storage
 
 ### Logs em Tempo Real
+
 ```bash
+
 # Via interface:
 # Containers > [container] > Logs
 # Services > [service] > Logs
 
 # Via CLI:
+
 docker service logs -f [service_name]
-```
+
+```text
 
 ### Estatísticas
+
 - CPU e Memory usage
 - Network I/O
 - Disk I/O
@@ -183,33 +217,45 @@ docker service logs -f [service_name]
 ## 🔧 Configurações Avançadas
 
 ### Edge Agent
+
 Para gerenciar Docker hosts remotos:
 
 ```bash
+
 # Instalar no host remoto
+
 docker run -d \
+
   --name portainer_edge_agent \
   --restart always \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /var/lib/docker/volumes:/var/lib/docker/volumes \
+
   portainer/agent:latest
-```
+
+```text
 
 ### Registry Management
+
 - Adicionar registries privados
 - Configurar autenticação
 - Pull automático de imagens
 
 ### Webhook Endpoints
+
 ```bash
+
 # Webhook para redeploy
+
 curl -X POST \
-  "https://portainer.empresa.com.br:9443/api/webhooks/[webhook_id]"
-```
+  "<https://portainer.empresa.com.br:9443/api/webhooks/[webhook_id>]"
+
+```text
 
 ## 🛡️ Segurança
 
 ### Recursos Ativados
+
 - ✅ HTTPS obrigatório
 - ✅ Autenticação robusta
 - ✅ Role-based access control
@@ -218,6 +264,7 @@ curl -X POST \
 - ✅ Audit logs
 
 ### Boas Práticas
+
 - 🔐 Use senhas fortes e 2FA quando disponível
 - 👥 Implemente least privilege access
 - 🔍 Monitore logs de acesso regularmente
@@ -227,60 +274,93 @@ curl -X POST \
 ## 🔧 Manutenção
 
 ### Backup
+
 ```bash
+
 # Backup dos dados do Portainer
+
 docker run --rm \
+
   -v portainer_data:/data \
   -v $(pwd):/backup \
+
   alpine tar czf /backup/portainer-backup.tar.gz -C /data .
-```
+
+```text
 
 ### Restore
+
 ```bash
+
 # Restore dos dados
+
 docker run --rm \
+
   -v portainer_data:/data \
   -v $(pwd):/backup \
+
   alpine tar xzf /backup/portainer-backup.tar.gz -C /data
-```
+
+```text
 
 ### Updates
+
 ```bash
+
 # Atualizar Portainer
+
 make stop-portainer
 docker service update --image portainer/portainer-ce:latest portainer_app
-```
+
+```text
 
 ## 🔍 Troubleshooting
 
 ### Problemas Comuns
 
 **Agent não conecta**:
+
+
 ```bash
+
 # Verificar conectividade
+
 telnet [agent_host] 9001
 
 # Verificar logs do agent
+
 docker logs portainer_agent
-```
+
+```text
 
 **Interface lenta**:
+
+
 ```bash
+
 # Verificar recursos
+
 docker stats portainer_app
 
 # Limpar dados antigos
 # Via interface: Settings > System > Prune
-```
+
+```text
 
 **Erro de permissão**:
+
+
 ```bash
+
 # Verificar socket Docker
+
 ls -la /var/run/docker.sock
 
 # Verificar grupos
+
 groups $USER
-```
+
+```text
 
 ## 📚 Links Úteis
 

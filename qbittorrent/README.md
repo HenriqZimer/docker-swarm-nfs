@@ -7,9 +7,12 @@ O qBittorrent é um cliente BitTorrent gratuito e de código aberto, com interfa
 ## 🚀 Deploy
 
 ```bash
+
 # Deploy do serviço
+
 docker stack deploy -c docker-compose.yml qbittorrent
-```
+
+```text
 
 ## 🔧 Configuração
 
@@ -26,20 +29,25 @@ docker stack deploy -c docker-compose.yml qbittorrent
 - **Senha**: Temporária gerada automaticamente (veja nos logs)
 
 ```bash
+
 # Ver logs para obter senha temporária inicial
+
 docker service logs qbittorrent_app | grep -i "temporary password"
-```
+
+```text
 
 A saída será algo como:
-```
+
+```text
 The WebUI administrator username is: admin
 The WebUI administrator password was not set. A temporary password is provided for this session: xYz123ABC
-```
+
+```text
 
 ### Como Definir Senha Permanente
 
 **Método 1: Via Interface Web (Recomendado)**
-1. Acesse https://qbittorrent.henriqzimer.com.br
+1. Acesse <https://qbittorrent.henriqzimer.com.br>
 2. Faça login com usuário `admin` e a senha temporária dos logs
 3. Vá em **Tools** → **Options** → **Web UI**
 4. Em **Authentication**, defina:
@@ -48,11 +56,16 @@ The WebUI administrator password was not set. A temporary password is provided f
 5. Clique em **Save**
 
 **Método 2: Editar Arquivo de Configuração Manualmente**
+
+
 ```bash
+
 # 1. Acesse o container
+
 docker exec -it $(docker ps -q -f name=qbittorrent) sh
 
 # 2. Edite o arquivo de configuração
+
 vi /config/qBittorrent/qBittorrent.conf
 
 # 3. Procure pela seção [Preferences]
@@ -61,9 +74,11 @@ vi /config/qBittorrent/qBittorrent.conf
 # WebUI\Password_PBKDF2=@ByteArray(...)
 
 # 5. Reinicie o serviço
+
 exit
 docker service update --force qbittorrent_app
-```
+
+```text
 
 ### Estrutura de Volumes
 
@@ -72,7 +87,7 @@ docker service update --force qbittorrent_app
 
 ## 🌐 Acesso
 
-- **URL Local**: http://localhost:8080
+- **URL Local**: <http://localhost:8080>
 - **URL Externa**: Configure no Cloudflare Tunnel
 
 ## 📋 Configuração Inicial
@@ -87,11 +102,13 @@ docker service update --force qbittorrent_app
 ## 🔧 Configurações Recomendadas
 
 ### Downloads
+
 - **Pasta padrão**: `/downloads/complete`
 - **Pasta incompleta**: `/downloads/incomplete`
 - **Pasta assistida**: `/downloads/watch`
 
 ### Conexão
+
 - **Porta**: 6881 (TCP/UDP)
 - **Habilitar UPnP/NAT-PMP**: Sim
 - **Habilitar DHT**: Sim
@@ -99,21 +116,27 @@ docker service update --force qbittorrent_app
 - **Habilitar LSD**: Sim
 
 ### Limites
+
 - **Global**: Configure conforme sua banda
 - **Por torrent**: Configure conforme necessário
 
 ## 🔧 Manutenção
 
 ```bash
+
 # Ver logs
+
 docker service logs qbittorrent_app
 
 # Restart do serviço
+
 docker service update --force qbittorrent_app
 
 # Parar serviço
+
 docker stack rm qbittorrent
-```
+
+```text
 
 ## 📊 Recursos
 
@@ -155,16 +178,20 @@ Após definir sua senha via interface web:
 Para fazer backup das suas configurações (incluindo senha):
 
 ```bash
+
 # Backup do arquivo de configuração
+
 docker exec $(docker ps -q -f name=qbittorrent) \
   cat /config/qBittorrent/qBittorrent.conf > qBittorrent.conf.backup
 
 # Para restaurar
+
 docker cp qBittorrent.conf.backup \
   $(docker ps -q -f name=qbittorrent):/config/qBittorrent/qBittorrent.conf
 
 docker service update --force qbittorrent_app
-```
+
+```text
 
 ## 🔗 Integração com Plex
 
