@@ -108,7 +108,8 @@ services:
       - admin_password
     networks:
       - media-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD-SHELL
@@ -143,6 +144,21 @@ services:
         reservations:
           cpus: "0.5"
           memory: 1G
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.photoprism.rule=Host(`photoprism.henriqzimer.com.br`)"
+        - "traefik.http.routers.photoprism.entrypoints=websecure"
+        - "traefik.http.routers.photoprism.tls=true"
+        - "traefik.http.routers.photoprism.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.photoprism.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.photoprism.loadbalancer.server.port=2342"
 
 volumes:
   db_data:
@@ -176,7 +192,10 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 

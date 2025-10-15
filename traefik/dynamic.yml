@@ -1,4 +1,4 @@
-# Traefik Dynamic Configuration
+# Traefik Dynamic Configuration for Docker Swarm
 http:
   # Middlewares
   middlewares:
@@ -7,49 +7,59 @@ http:
       redirectScheme:
         scheme: https
         permanent: true
-    
-    # Headers de segurança
+
+    # Headers de segurança aprimorados
     security-headers:
       headers:
-        accessControlAllowMethods:
-          - GET
-          - OPTIONS
-          - PUT
-          - POST
-          - DELETE
-        accessControlAllowOriginList:
-          - "*"
-        accessControlMaxAge: 100
-        hostsProxyHeaders:
-          - "X-Forwarded-Host"
-        referrerPolicy: "same-origin"
-        contentTypeNosniff: true
         browserXssFilter: true
+        contentTypeNosniff: true
         forceSTSHeader: true
+        frameDeny: false
+        customFrameOptionsValue: "SAMEORIGIN"
         stsIncludeSubdomains: true
         stsPreload: true
         stsSeconds: 31536000
-        customFrameOptionsValue: "SAMEORIGIN"
-        customRequestHeaders:
+        referrerPolicy: "strict-origin-when-cross-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=()"
+        customResponseHeaders:
           X-Forwarded-Proto: "https"
-    
-    # Rate limiting
-    rate-limit:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+          - "X-Forwarded-Proto"
+          - "X-Forwarded-For"
+
+    # Rate limiting para proteção contra DDoS
+    rate-limit-strict:
+      rateLimit:
+        average: 50
+        period: 1m
+        burst: 100
+
+    rate-limit-medium:
       rateLimit:
         average: 100
         period: 1m
         burst: 200
-    
+
+    rate-limit-relaxed:
+      rateLimit:
+        average: 200
+        period: 1m
+        burst: 400
+
     # Compressão
     compression:
-      compress: {}
-    
+      compress:
+        excludedContentTypes:
+          - "text/event-stream"
+
     # Autenticação básica para serviços administrativos
     admin-auth:
       basicAuth:
         usersFile: "/run/secrets/traefik_dashboard_auth"
-    
-    # IP Whitelist para serviços internos
+
+    # IP Whitelist para serviços internos (opcional)
     internal-whitelist:
       ipWhiteList:
         sourceRange:
@@ -57,7 +67,13 @@ http:
           - "172.16.0.0/12"
           - "192.168.0.0/16"
           - "127.0.0.1/32"
-    
+
+    # Retry para resiliência
+    retry:
+      retry:
+        attempts: 3
+        initialInterval: 100ms
+
     # CORS para APIs
     cors-headers:
       headers:
@@ -76,82 +92,93 @@ http:
           - "https://henriqzimer.com.br"
           - "https://*.henriqzimer.com.br"
         accessControlMaxAge: 100
-    
-    # Chain de middlewares para aplicações web
+
+    # Chain de middlewares para aplicações web padrão
     web-chain:
       chain:
         middlewares:
           - security-headers
           - compression
-          - rate-limit
-    
+          - rate-limit-medium
+          - retry
+
     # Chain para APIs
     api-chain:
       chain:
         middlewares:
           - security-headers
           - cors-headers
-          - rate-limit
-    
+          - rate-limit-medium
+          - retry
+
     # Chain para serviços administrativos
     admin-chain:
       chain:
         middlewares:
           - security-headers
           - admin-auth
-          - internal-whitelist
+          - rate-limit-strict
 
-  # Routers adicionais para serviços específicos
-  routers:
-    # Router para metrics do Prometheus
-    prometheus:
-      rule: "Host(`metrics.henriqzimer.com.br`) && Path(`/metrics`)"
-      entryPoints:
-        - websecure
-      service: prometheus@internal
-      middlewares:
-        - admin-chain
-      tls:
-        certResolver: cloudflare
+    # Chain para serviços públicos com rate limit mais relaxado
+    public-chain:
+      chain:
+        middlewares:
+          - security-headers
+          - compression
+          - rate-limit-relaxed
+          - retry
+
+  # Serviços e rotas configuradas via labels no Swarm
+  # Não é necessário definir routers aqui para serviços do Swarm
 
 # TLS Configuration
 tls:
   options:
     default:
-      sslProtocols:
-        - "TLSv1.2"
-        - "TLSv1.3"
+      minVersion: VersionTLS12
+      maxVersion: VersionTLS13
+      sniStrict: false
       cipherSuites:
-        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
-        - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
-        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-        - "TLS_RSA_WITH_AES_256_GCM_SHA384"
-        - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+        # TLS 1.3 ciphers
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_AES_128_GCM_SHA256
+        # TLS 1.2 ciphers
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       curvePreferences:
         - CurveP521
         - CurveP384
-      minVersion: "VersionTLS12"
-      maxVersion: "VersionTLS13"
-    
-    # Configuração mais restritiva para serviços críticos
-    strict:
-      sslProtocols:
-        - "TLSv1.3"
+        - X25519
+      alpnProtocols:
+        - h2
+        - http/1.1
+
+    # Configuração TLS 1.3 apenas para serviços críticos
+    modern:
+      minVersion: VersionTLS13
+      maxVersion: VersionTLS13
+      sniStrict: true
       cipherSuites:
-        - "TLS_AES_256_GCM_SHA384"
-        - "TLS_CHACHA20_POLY1305_SHA256"
-        - "TLS_AES_128_GCM_SHA256"
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
+        - TLS_AES_128_GCM_SHA256
       curvePreferences:
         - CurveP521
-        - CurveP384
-      minVersion: "VersionTLS13"
-
-# TCP Services (para proxying TCP)
-tcp:
-  routers: {}
-  services: {}
-
-# UDP Services (para proxying UDP)
-udp:
-  routers: {}
-  services: {}
+        - X25519
+      alpnProtocols:
+        - h2
+# Configurações para serviços TCP/UDP (quando necessário)
+# Exemplos: bancos de dados, MQTT, etc.
+# tcp:
+#   routers: {}
+#   services: {}
+#   middlewares: {}
+#
+# udp:
+#   routers: {}
+#   services: {}

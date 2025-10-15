@@ -137,7 +137,8 @@ services:
       - domain_url
     networks:
       - monitoring-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD-SHELL
@@ -172,6 +173,21 @@ services:
         reservations:
           cpus: "0.5"
           memory: 512M
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.grafana.rule=Host(`grafana.henriqzimer.com.br`)"
+        - "traefik.http.routers.grafana.entrypoints=websecure"
+        - "traefik.http.routers.grafana.tls=true"
+        - "traefik.http.routers.grafana.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.grafana.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
 volumes:
   db_data:
@@ -193,7 +209,10 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 

@@ -124,7 +124,8 @@ services:
       - db_url
     networks:
       - management-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD
@@ -162,6 +163,21 @@ services:
         parallelism: 1
         delay: 5s
         order: stop-first
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.henriqzimer.com.br`)"
+        - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+        - "traefik.http.routers.vaultwarden.tls=true"
+        - "traefik.http.routers.vaultwarden.tls.certresolver=cloudflare"
+
+        # Middlewares (segurança extra para gerenciador de senhas)
+        - "traefik.http.routers.vaultwarden.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
 volumes:
   db_data:
@@ -183,7 +199,10 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 

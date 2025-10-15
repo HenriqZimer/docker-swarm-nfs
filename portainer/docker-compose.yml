@@ -13,7 +13,8 @@ services:
       - admin_password
     networks:
       - management-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     deploy:
       mode: replicated
       replicas: 1
@@ -40,6 +41,21 @@ services:
         reservations:
           cpus: "0.2"
           memory: 256M
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.portainer.rule=Host(`portainer.henriqzimer.com.br`)"
+        - "traefik.http.routers.portainer.entrypoints=websecure"
+        - "traefik.http.routers.portainer.tls=true"
+        - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.portainer.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   agent:
     image: portainer/agent:latest
@@ -51,7 +67,8 @@ services:
       AGENT_CLUSTER_ADDR: tasks.portainer_agent
     networks:
       - management-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     deploy:
       mode: global
       placement:
@@ -91,7 +108,10 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 

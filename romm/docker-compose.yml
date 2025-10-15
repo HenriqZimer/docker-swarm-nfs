@@ -6,13 +6,13 @@ services:
       - DB_HOST=db
       - DB_NAME=romm
       - DB_USER=romm-user
-      - DB_PASSWD_FILE=/run/secrets/romm_db_password
-      - ROMM_AUTH_SECRET_KEY_FILE=/run/secrets/romm_auth_secret_key
+      - DB_PASSWD_FILE=/run/secrets/db_password
+      - ROMM_AUTH_SECRET_KEY_FILE=/run/secrets/auth_secret_key
       - HASHEOUS_API_ENABLED=true
-      - IGDB_CLIENT_ID_FILE=/run/secrets/romm_igdb_client_id
-      - IGDB_CLIENT_SECRET_FILE=/run/secrets/romm_igdb_client_secret
-      - STEAMGRIDDB_API_KEY_FILE=/run/secrets/romm_steamgriddb_api_key
-      - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/romm_retroachievements_api_key
+      - IGDB_CLIENT_ID_FILE=/run/secrets/igdb_client_id
+      - IGDB_CLIENT_SECRET_FILE=/run/secrets/igdb_client_secret
+      - STEAMGRIDDB_API_KEY_FILE=/run/secrets/steamgriddb_api_key
+      - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/retroachievements_api_key
       # Alternative providers (optional)
       # - SCREENSCRAPER_USER_FILE=/run/secrets/romm_screenscraper_user
       # - SCREENSCRAPER_PASSWORD_FILE=/run/secrets/romm_screenscraper_password
@@ -26,18 +26,19 @@ services:
       - assets_data:/romm/assets
       - config_data:/romm/config
     secrets:
-      - romm_db_password
-      - romm_auth_secret_key
-      - romm_igdb_client_id
-      - romm_igdb_client_secret
-      - romm_steamgriddb_api_key
-      - romm_retroachievements_api_key
-      # - romm_screenscraper_user
-      # - romm_screenscraper_password
-      # - romm_mobygames_api_key
+      - db_password
+      - auth_secret_key
+      - igdb_client_id
+      - igdb_client_secret
+      - steamgriddb_api_key
+      - retroachievements_api_key
+      # - screenscraper_user
+      # - screenscraper_password
+      # - mobygames_api_key
     networks:
       - retro-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD-SHELL
@@ -72,19 +73,34 @@ services:
         reservations:
           cpus: "0.5"
           memory: 1G
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.romm.rule=Host(`romm.henriqzimer.com.br`)"
+        - "traefik.http.routers.romm.entrypoints=websecure"
+        - "traefik.http.routers.romm.tls=true"
+        - "traefik.http.routers.romm.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.romm.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.romm.loadbalancer.server.port=8080"
 
   db:
     image: mariadb:latest
     environment:
-      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/romm_db_root_password
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MARIADB_DATABASE=romm
       - MARIADB_USER=romm-user
-      - MARIADB_PASSWORD_FILE=/run/secrets/romm_db_password
+      - MARIADB_PASSWORD_FILE=/run/secrets/db_password
     volumes:
       - db_data:/var/lib/mysql
     secrets:
-      - romm_db_password
-      - romm_db_root_password
+      - db_password
+      - db_root_password
     networks:
       - retro-network
     healthcheck:
@@ -168,24 +184,27 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 
 secrets:
-  romm_db_password:
+  db_password:
     file: ./romm_db_password.txt
-  romm_db_root_password:
+  db_root_password:
     file: ./romm_db_root_password.txt
-  romm_auth_secret_key:
+  auth_secret_key:
     file: ./romm_auth_secret_key.txt
-  romm_igdb_client_id:
+  igdb_client_id:
     file: ./romm_igdb_client_id.txt
-  romm_igdb_client_secret:
+  igdb_client_secret:
     file: ./romm_igdb_client_secret.txt
-  romm_steamgriddb_api_key:
+  steamgriddb_api_key:
     file: ./romm_steamgriddb_api_key.txt
-  romm_retroachievements_api_key:
+  retroachievements_api_key:
     file: ./romm_retroachievements_api_key.txt
   # Optional providers
   # romm_screenscraper_user:

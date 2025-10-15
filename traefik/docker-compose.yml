@@ -1,69 +1,129 @@
 ---
 services:
-  traefik:
+  app:
     image: traefik:v3.1
     command:
-      - --configfile=/etc/traefik/traefik.yml
+      # Configurações básicas
+      - --global.checkNewVersion=false
+      - --global.sendAnonymousUsage=false
+
+      # API e Dashboard
+      - --api=true
+      - --api.dashboard=true
+      - --api.insecure=false
+
+      # Ping para healthcheck
+      - --ping=true
+      - --ping.entryPoint=traefik
+
+      # Entry Points
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+      - --entrypoints.websecure.http.tls.certResolver=cloudflare
+      - --entrypoints.websecure.http3.advertisedPort=443
+      - --entrypoints.traefik.address=:8080
+
+      # Docker Swarm Provider (Traefik v3)
+      - --providers.swarm=true
+      - --providers.swarm.exposedByDefault=false
+      - --providers.swarm.network=traefik_proxy-network
+      - --providers.swarm.watch=true
+      - --providers.swarm.endpoint=unix:///var/run/docker.sock
+      - --providers.swarm.refreshSeconds=15
+
+      # File Provider para configuração dinâmica
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.file.watch=true
+
+      # Certificados SSL (Cloudflare)
+      - --certificatesresolvers.cloudflare.acme.email=henrique@henriqzimer.com.br
+      - --certificatesresolvers.cloudflare.acme.storage=/tmp/acme.json
+      - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=60s
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.disablepropagationcheck=true
+
+      # Logs
+      - --log.level=INFO
+      - --log.format=json
+      - --accesslog=true
+      - --accesslog.format=json
+      - --accesslog.bufferingsize=100
+
+      # Metrics
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --metrics.prometheus.addRoutersLabels=true
+
+    environment:
+      - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_api_key
+      - TZ=America/Sao_Paulo
+
+    configs:
+      - source: dynamic_config
+        target: /etc/traefik/dynamic.yml
+        mode: 0444
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_config:/etc/traefik
-      - traefik_data:/data
-      - traefik_logs:/var/log/traefik
-    environment:
-      - CF_API_EMAIL_FILE=/run/secrets/cloudflare_email
-      - CF_API_KEY_FILE=/run/secrets/cloudflare_api_key
-      - TRAEFIK_LOG_LEVEL=INFO
-      - TZ=America/Sao_Paulo
+
+    secrets:
+      - cloudflare_api_key
+      - traefik_dashboard_auth
+
     networks:
       - proxy-network
-      - cloudflare-proxy
+
     ports:
       - target: 80
         published: 80
         protocol: tcp
-        mode: host
+        mode: ingress
       - target: 443
         published: 443
         protocol: tcp
-        mode: host
+        mode: ingress
       - target: 8080
         published: 8080
         protocol: tcp
-        mode: host
-    secrets:
-      - cloudflare_email
-      - cloudflare_api_key
-      - traefik_dashboard_auth
+        mode: ingress
+
     healthcheck:
       test:
-        - CMD-SHELL
-        - wget --no-verbose --tries=1 --spider http://localhost:8080/ping || exit 1
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
     deploy:
-      mode: replicated
-      replicas: 1
+      mode: global
       placement:
         constraints:
           - node.role == manager
-        preferences:
-          - spread: node.labels.zone
       restart_policy:
         condition: on-failure
-        delay: 10s
+        delay: 5s
         max_attempts: 3
         window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
         monitor: 30s
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: pause
         monitor: 30s
       resources:
@@ -71,46 +131,32 @@ services:
           cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: "0.5"
+          cpus: "0.25"
           memory: 128M
       labels:
+        # Habilitar Traefik para este serviço
         - "traefik.enable=true"
+
+        # Configuração do Dashboard
         - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.henriqzimer.com.br`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
         - "traefik.http.routers.traefik-dashboard.tls=true"
         - "traefik.http.routers.traefik-dashboard.tls.certresolver=cloudflare"
         - "traefik.http.routers.traefik-dashboard.service=api@internal"
-        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-auth"
-        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.usersfile=/run/secrets/traefik_dashboard_auth"
-        - "traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080"
+        - "traefik.http.routers.traefik-dashboard.middlewares=admin-auth@file"
+
+        # Porta do serviço (necessária para Swarm mode)
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+configs:
+  dynamic_config:
+    file: ./dynamic.yml
 
 secrets:
-  cloudflare_email:
-    file: ./cloudflare_email.txt
   cloudflare_api_key:
     file: ./cloudflare_api_key.txt
   traefik_dashboard_auth:
     file: ./traefik_dashboard_auth.txt
-
-volumes:
-  traefik_config:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/traefik/config"
-  traefik_data:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/traefik/data"
-  traefik_logs:
-    driver: local
-    driver_opts:
-      type: nfs
-      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/traefik/logs"
 
 networks:
   proxy-network:
@@ -121,7 +167,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/16
-  cloudflare-proxy:
-    external: true
-    name: cloudflared_proxy-network
+        - subnet: 172.22.0.0/16

@@ -165,7 +165,8 @@ services:
       - db_password
     networks:
       - monitoring-network
-      - proxy-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD-SHELL
@@ -200,6 +201,21 @@ services:
         reservations:
           cpus: "0.25"
           memory: 256M
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.zabbix.rule=Host(`zabbix.henriqzimer.com.br`)"
+        - "traefik.http.routers.zabbix.entrypoints=websecure"
+        - "traefik.http.routers.zabbix.tls=true"
+        - "traefik.http.routers.zabbix.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.zabbix.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.zabbix.loadbalancer.server.port=8080"
 
   agent:
     image: zabbix/zabbix-agent2:alpine-7.0-latest
@@ -319,7 +335,10 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network
 
