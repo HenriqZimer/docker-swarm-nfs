@@ -12,8 +12,9 @@ services:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
     networks:
-      - media-network
-      - proxy-network
+      - download-network
+      - traefik-proxy
+      - cloudflared-proxy
     healthcheck:
       test:
         - CMD-SHELL
@@ -47,6 +48,21 @@ services:
         reservations:
           cpus: "1.0"
           memory: 512M
+      labels:
+        # Habilitar Traefik
+        - "traefik.enable=true"
+
+        # Configuração do Router
+        - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.henriqzimer.com.br`)"
+        - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+        - "traefik.http.routers.qbittorrent.tls=true"
+        - "traefik.http.routers.qbittorrent.tls.certresolver=cloudflare"
+
+        # Middlewares
+        - "traefik.http.routers.qbittorrent.middlewares=web-chain@file"
+
+        # Configuração do Serviço
+        - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
 
 volumes:
   config_data:
@@ -63,11 +79,14 @@ volumes:
       device: ":/mnt/slowbro/downloads"
 
 networks:
-  media-network:
+  download-network:
     driver: overlay
     driver_opts:
       encrypted: "true"
     attachable: true
-  proxy-network:
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
     external: true
     name: cloudflared_proxy-network

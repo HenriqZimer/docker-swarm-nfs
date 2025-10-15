@@ -13,36 +13,56 @@ docker stack deploy -c docker-compose.yml qbittorrent
 
 ## 🔧 Configuração
 
-### Credenciais Personalizadas
+### ⚠️ Limitação: Senha de Admin
 
-As credenciais são configuradas via Docker Secrets:
+**O qBittorrent (imagem linuxserver) NÃO suporta:**
+- ❌ Variáveis de ambiente para senha de admin
+- ❌ Docker secrets para autenticação
+- ❌ Configuração automática de credenciais
 
-- **Usuário**: Arquivo `qbittorrent_username.txt`
-- **Senha**: Arquivo `qbittorrent_password.txt`
-
-```bash
-# Editar credenciais
-echo "meuusuario" > qbittorrent_username.txt
-echo "minhasenhasegura123!" > qbittorrent_password.txt
-```
-
-**IMPORTANTE**: 
-- O qBittorrent não suporta nativamente variáveis de ambiente para credenciais
-- As credenciais personalizadas são aplicadas através de configuração de arquivo
-- Após mudanças nas credenciais, reinicie o serviço:
-
-```bash
-docker service update --force qbittorrent_app
-```
-
-### Credenciais Padrão (se não configurar secrets)
+### Credenciais Padrão (Primeira Inicialização)
 
 - **Usuário**: `admin`
-- **Senha**: Temporária gerada no primeiro boot (veja os logs)
+- **Senha**: Temporária gerada automaticamente (veja nos logs)
 
 ```bash
-# Ver logs para obter senha inicial
-docker service logs qbittorrent_app
+# Ver logs para obter senha temporária inicial
+docker service logs qbittorrent_app | grep -i "temporary password"
+```
+
+A saída será algo como:
+```
+The WebUI administrator username is: admin
+The WebUI administrator password was not set. A temporary password is provided for this session: xYz123ABC
+```
+
+### Como Definir Senha Permanente
+
+**Método 1: Via Interface Web (Recomendado)**
+1. Acesse https://qbittorrent.henriqzimer.com.br
+2. Faça login com usuário `admin` e a senha temporária dos logs
+3. Vá em **Tools** → **Options** → **Web UI**
+4. Em **Authentication**, defina:
+   - Username: `admin` (ou outro de sua preferência)
+   - Password: Sua senha forte
+5. Clique em **Save**
+
+**Método 2: Editar Arquivo de Configuração Manualmente**
+```bash
+# 1. Acesse o container
+docker exec -it $(docker ps -q -f name=qbittorrent) sh
+
+# 2. Edite o arquivo de configuração
+vi /config/qBittorrent/qBittorrent.conf
+
+# 3. Procure pela seção [Preferences]
+# 4. Modifique ou adicione as linhas:
+# WebUI\Username=admin
+# WebUI\Password_PBKDF2=@ByteArray(...)
+
+# 5. Reinicie o serviço
+exit
+docker service update --force qbittorrent_app
 ```
 
 ### Estrutura de Volumes
@@ -107,21 +127,42 @@ docker stack rm qbittorrent
 
 - Rede isolada para serviços de mídia
 - Comunicação encriptada via overlay network
-- Acesso via tunnel Cloudflare (HTTPS)
-- **Credenciais personalizadas via Docker Secrets**
-- Configuração segura sem exposição de senhas em variáveis de ambiente
+- Acesso via Traefik com HTTPS (certificado Let's Encrypt)
+- Acesso via Cloudflare Tunnel
+- Middleware `web-chain` com rate limiting e security headers
+- ⚠️ **Senha deve ser configurada manualmente via interface web**
 
-## 📝 Secrets do Docker Swarm
+## ⚙️ Configurações Recomendadas de Segurança
 
-Os seguintes secrets são utilizados:
+Após definir sua senha via interface web:
 
-- `qbittorrent_username`: Nome de usuário para login
-- `qbittorrent_password`: Senha para login
+1. **Web UI** (Tools → Options → Web UI):
+   - ✅ Enable CSRF protection
+   - ✅ Enable Host header validation
+   - ✅ Enable clickjacking protection
+   - ✅ Session timeout: 3600 seconds
+
+2. **Connection** (Tools → Options → Connection):
+   - ✅ Use random port on startup: Disabled (usar porta fixa 6881)
+   - ✅ Enable UPnP/NAT-PMP: Yes (se necessário)
+
+3. **BitTorrent** (Tools → Options → BitTorrent):
+   - ✅ Privacy: Enable anonymous mode
+   - ✅ Torrent Queueing: Limit active torrents
+
+## 🔐 Backup da Configuração
+
+Para fazer backup das suas configurações (incluindo senha):
 
 ```bash
-# Atualizar secrets (requer restart do serviço)
-echo "novousuario" > qbittorrent_username.txt
-echo "novasenha123!" > qbittorrent_password.txt
+# Backup do arquivo de configuração
+docker exec $(docker ps -q -f name=qbittorrent) \
+  cat /config/qBittorrent/qBittorrent.conf > qBittorrent.conf.backup
+
+# Para restaurar
+docker cp qBittorrent.conf.backup \
+  $(docker ps -q -f name=qbittorrent):/config/qBittorrent/qBittorrent.conf
+
 docker service update --force qbittorrent_app
 ```
 
