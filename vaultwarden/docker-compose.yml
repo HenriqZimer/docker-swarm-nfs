@@ -1,19 +1,14 @@
----
 services:
   db:
     image: postgres:16-alpine
     volumes:
       - db_data:/var/lib/postgresql/data:rw
-    command: |
-      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
     environment:
       - POSTGRES_DB=vaultwarden
       - POSTGRES_USER=vaultwarden
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - PGDATA=/var/lib/postgresql/data/pgdata
       - TZ=America/Sao_Paulo
-    secrets:
-      - db_password
     networks:
       - management-network
     healthcheck:
@@ -24,6 +19,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+    command: |
+      postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
     deploy:
       mode: replicated
       replicas: 1
@@ -45,11 +42,14 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 512M
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 256M
+    secrets:
+      - db_password
+
   app:
     image: vaultwarden/server:latest
     volumes:
@@ -114,14 +114,6 @@ services:
       - EMERGENCY_NOTIFICATION_REMINDER_SCHEDULE=0 3 * * * *
       - TZ=America/Sao_Paulo
       - DATABASE_URL_FILE=/run/secrets/db_url
-    secrets:
-      - admin_token
-      - smtp_host
-      - smtp_email
-      - smtp_username
-      - smtp_password
-      - domain
-      - db_url
     networks:
       - management-network
       - traefik-proxy
@@ -130,7 +122,7 @@ services:
       test:
         - CMD
         - curl
-        - "-f"
+        - '-f'
         - http://localhost:80/alive
       interval: 30s
       timeout: 10s
@@ -145,10 +137,10 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "1.0"
+          cpus: '1.0'
         reservations:
           memory: 512M
-          cpus: "0.5"
+          cpus: '0.5'
       restart_policy:
         condition: on-failure
         delay: 30s
@@ -164,20 +156,21 @@ services:
         delay: 5s
         order: stop-first
       labels:
-        # Habilitar Traefik
-        - "traefik.enable=true"
-
-        # Configuração do Router
-        - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.henriqzimer.com.br`)"
-        - "traefik.http.routers.vaultwarden.entrypoints=websecure"
-        - "traefik.http.routers.vaultwarden.tls=true"
-        - "traefik.http.routers.vaultwarden.tls.certresolver=cloudflare"
-
-        # Middlewares (segurança extra para gerenciador de senhas)
-        - "traefik.http.routers.vaultwarden.middlewares=web-chain@file"
-
-        # Configuração do Serviço
-        - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+        - traefik.enable=true
+        - traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.henriqzimer.com.br`)
+        - traefik.http.routers.vaultwarden.entrypoints=websecure
+        - traefik.http.routers.vaultwarden.tls=true
+        - traefik.http.routers.vaultwarden.tls.certresolver=cloudflare
+        - traefik.http.routers.vaultwarden.middlewares=web-chain@file
+        - traefik.http.services.vaultwarden.loadbalancer.server.port=80
+    secrets:
+      - admin_token
+      - smtp_host
+      - smtp_email
+      - smtp_username
+      - smtp_password
+      - domain
+      - db_url
 
 volumes:
   db_data:
@@ -185,19 +178,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/vaultwarden/db"
+      device: ':/mnt/altaria/docker/vaultwarden/db'
   app_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/vaultwarden/app"
+      device: ':/mnt/altaria/docker/vaultwarden/app'
 
 networks:
   management-network:
     driver: overlay
     driver_opts:
-      encrypted: "true"
+      encrypted: 'true'
     attachable: true
   traefik-proxy:
     external: true

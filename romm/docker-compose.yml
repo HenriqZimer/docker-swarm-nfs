@@ -1,7 +1,12 @@
----
 services:
   app:
     image: rommapp/romm:latest
+    volumes:
+      - resources_data:/romm/resources
+      - redis_data:/romm/redis-data
+      - library_data:/romm/library
+      - assets_data:/romm/assets
+      - config_data:/romm/config
     environment:
       - DB_HOST=db
       - DB_NAME=romm
@@ -13,28 +18,6 @@ services:
       - IGDB_CLIENT_SECRET_FILE=/run/secrets/igdb_client_secret
       - STEAMGRIDDB_API_KEY_FILE=/run/secrets/steamgriddb_api_key
       - RETROACHIEVEMENTS_API_KEY_FILE=/run/secrets/retroachievements_api_key
-      # Alternative providers (optional)
-      # - SCREENSCRAPER_USER_FILE=/run/secrets/romm_screenscraper_user
-      # - SCREENSCRAPER_PASSWORD_FILE=/run/secrets/romm_screenscraper_password
-      # - MOBYGAMES_API_KEY_FILE=/run/secrets/romm_mobygames_api_key
-      # - LAUNCHBOX_API_ENABLED=true
-      # - PLAYMATCH_API_ENABLED=true
-    volumes:
-      - resources_data:/romm/resources
-      - redis_data:/romm/redis-data
-      - library_data:/romm/library
-      - assets_data:/romm/assets
-      - config_data:/romm/config
-    secrets:
-      - db_password
-      - auth_secret_key
-      - igdb_client_id
-      - igdb_client_secret
-      - steamgriddb_api_key
-      - retroachievements_api_key
-      # - screenscraper_user
-      # - screenscraper_password
-      # - mobygames_api_key
     networks:
       - retro-network
       - traefik-proxy
@@ -68,47 +51,44 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "2.0"
+          cpus: '2.0'
           memory: 4G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 1G
       labels:
-        # Habilitar Traefik
-        - "traefik.enable=true"
-
-        # Configuração do Router
-        - "traefik.http.routers.romm.rule=Host(`romm.henriqzimer.com.br`)"
-        - "traefik.http.routers.romm.entrypoints=websecure"
-        - "traefik.http.routers.romm.tls=true"
-        - "traefik.http.routers.romm.tls.certresolver=cloudflare"
-
-        # Middlewares
-        - "traefik.http.routers.romm.middlewares=web-chain@file"
-
-        # Configuração do Serviço
-        - "traefik.http.services.romm.loadbalancer.server.port=8080"
+        - traefik.enable=true
+        - traefik.http.routers.romm.rule=Host(`romm.henriqzimer.com.br`)
+        - traefik.http.routers.romm.entrypoints=websecure
+        - traefik.http.routers.romm.tls=true
+        - traefik.http.routers.romm.tls.certresolver=cloudflare
+        - traefik.http.routers.romm.middlewares=web-chain@file
+        - traefik.http.services.romm.loadbalancer.server.port=8080
+    secrets:
+      - db_password
+      - auth_secret_key
+      - igdb_client_id
+      - igdb_client_secret
+      - steamgriddb_api_key
+      - retroachievements_api_key
 
   db:
     image: mariadb:latest
+    volumes:
+      - db_data:/var/lib/mysql
     environment:
       - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MARIADB_DATABASE=romm
       - MARIADB_USER=romm-user
       - MARIADB_PASSWORD_FILE=/run/secrets/db_password
-    volumes:
-      - db_data:/var/lib/mysql
-    secrets:
-      - db_password
-      - db_root_password
     networks:
       - retro-network
     healthcheck:
       test:
         - CMD
         - healthcheck.sh
-        - --connect
-        - --innodb_initialized
+        - '--connect'
+        - '--innodb_initialized'
       interval: 30s
       timeout: 10s
       retries: 5
@@ -134,11 +114,14 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 1G
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 512M
+    secrets:
+      - db_password
+      - db_root_password
 
 volumes:
   db_data:
@@ -146,43 +129,43 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/romm/db"
+      device: ':/mnt/altaria/docker/romm/db'
   redis_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/romm/redis"
+      device: ':/mnt/altaria/docker/romm/redis'
   resources_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/romm/resources"
+      device: ':/mnt/altaria/docker/romm/resources'
   library_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/slowbro/library"
+      device: ':/mnt/slowbro/library'
   assets_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/romm/assets"
+      device: ':/mnt/altaria/docker/romm/assets'
   config_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ":/mnt/altaria/docker/romm/config"
+      device: ':/mnt/altaria/docker/romm/config'
 
 networks:
   retro-network:
     driver: overlay
     driver_opts:
-      encrypted: "true"
+      encrypted: 'true'
     attachable: true
   traefik-proxy:
     external: true
@@ -206,10 +189,3 @@ secrets:
     file: ./romm_steamgriddb_api_key.txt
   retroachievements_api_key:
     file: ./romm_retroachievements_api_key.txt
-  # Optional providers
-  # romm_screenscraper_user:
-  #   file: ./romm_screenscraper_user.txt
-  # romm_screenscraper_password:
-  #   file: ./romm_screenscraper_password.txt
-  # romm_mobygames_api_key:
-  #   file: ./romm_mobygames_api_key.txt

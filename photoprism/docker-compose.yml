@@ -1,19 +1,15 @@
----
 services:
   db:
     image: mariadb:11
     volumes:
       - db_data:/var/lib/mysql
-    command: "--innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120"
     environment:
-      MARIADB_AUTO_UPGRADE: "1"
-      MARIADB_INITDB_SKIP_TZINFO: "1"
+      MARIADB_AUTO_UPGRADE: '1'
+      MARIADB_INITDB_SKIP_TZINFO: '1'
       MARIADB_DATABASE: photoprism
       MARIADB_USER: photoprism
       MARIADB_PASSWORD_FILE: /run/secrets/db_password
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_password
-    secrets:
-      - db_password
     networks:
       - media-network
     healthcheck:
@@ -24,6 +20,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    command: '--innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120'
     deploy:
       mode: replicated
       replicas: 1
@@ -45,11 +42,13 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 1G
         reservations:
-          cpus: "0.25"
+          cpus: '0.25'
           memory: 512M
+    secrets:
+      - db_password
 
   app:
     image: photoprism/photoprism:latest
@@ -61,38 +60,38 @@ services:
       PHOTOPRISM_ADMIN_USER: admin
       PHOTOPRISM_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
       PHOTOPRISM_AUTH_MODE: password
-      PHOTOPRISM_DISABLE_TLS: "false"
-      PHOTOPRISM_DEFAULT_TLS: "true"
+      PHOTOPRISM_DISABLE_TLS: 'false'
+      PHOTOPRISM_DEFAULT_TLS: 'true'
       PHOTOPRISM_DEFAULT_LOCALE: pt
       PHOTOPRISM_PLACES_LOCALE: local
       PHOTOPRISM_SITE_URL_FILE: /run/secrets/url
       PHOTOPRISM_SITE_TITLE: PhotoPrism
       PHOTOPRISM_SITE_CAPTION: PhotoPrism
-      PHOTOPRISM_SITE_DESCRIPTION: ""
-      PHOTOPRISM_SITE_AUTHOR: ""
+      PHOTOPRISM_SITE_DESCRIPTION: ''
+      PHOTOPRISM_SITE_AUTHOR: ''
       PHOTOPRISM_LOG_LEVEL: info
-      PHOTOPRISM_READONLY: "false"
-      PHOTOPRISM_EXPERIMENTAL: "false"
-      PHOTOPRISM_DISABLE_CHOWN: "false"
-      PHOTOPRISM_DISABLE_WEBDAV: "false"
-      PHOTOPRISM_DISABLE_SETTINGS: "false"
-      PHOTOPRISM_DISABLE_TENSORFLOW: "false"
-      PHOTOPRISM_DISABLE_FACES: "false"
-      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
-      PHOTOPRISM_DISABLE_VECTORS: "false"
-      PHOTOPRISM_DISABLE_RAW: "false"
-      PHOTOPRISM_RAW_PRESETS: "false"
-      PHOTOPRISM_SIDECAR_YAML: "true"
-      PHOTOPRISM_BACKUP_ALBUMS: "true"
-      PHOTOPRISM_BACKUP_DATABASE: "true"
+      PHOTOPRISM_READONLY: 'false'
+      PHOTOPRISM_EXPERIMENTAL: 'false'
+      PHOTOPRISM_DISABLE_CHOWN: 'false'
+      PHOTOPRISM_DISABLE_WEBDAV: 'false'
+      PHOTOPRISM_DISABLE_SETTINGS: 'false'
+      PHOTOPRISM_DISABLE_TENSORFLOW: 'false'
+      PHOTOPRISM_DISABLE_FACES: 'false'
+      PHOTOPRISM_DISABLE_CLASSIFICATION: 'false'
+      PHOTOPRISM_DISABLE_VECTORS: 'false'
+      PHOTOPRISM_DISABLE_RAW: 'false'
+      PHOTOPRISM_RAW_PRESETS: 'false'
+      PHOTOPRISM_SIDECAR_YAML: 'true'
+      PHOTOPRISM_BACKUP_ALBUMS: 'true'
+      PHOTOPRISM_BACKUP_DATABASE: 'true'
       PHOTOPRISM_BACKUP_SCHEDULE: daily
-      PHOTOPRISM_INDEX_SCHEDULE: ""
+      PHOTOPRISM_INDEX_SCHEDULE: ''
       PHOTOPRISM_AUTO_INDEX: 300
       PHOTOPRISM_AUTO_IMPORT: -1
-      PHOTOPRISM_DETECT_NSFW: "false"
-      PHOTOPRISM_UPLOAD_NSFW: "true"
-      PHOTOPRISM_UPLOAD_ALLOW: ""
-      PHOTOPRISM_UPLOAD_ARCHIVES: "true"
+      PHOTOPRISM_DETECT_NSFW: 'false'
+      PHOTOPRISM_UPLOAD_NSFW: 'true'
+      PHOTOPRISM_UPLOAD_ALLOW: ''
+      PHOTOPRISM_UPLOAD_ARCHIVES: 'true'
       PHOTOPRISM_UPLOAD_LIMIT: 5000
       PHOTOPRISM_ORIGINALS_LIMIT: 5000
       PHOTOPRISM_HTTP_COMPRESSION: gzip
@@ -102,10 +101,6 @@ services:
       PHOTOPRISM_DATABASE_USER: photoprism
       PHOTOPRISM_DATABASE_PASSWORD_FILE: /run/secrets/db_password
       PHOTOPRISM_INIT: https
-    secrets:
-      - url
-      - db_password
-      - admin_password
     networks:
       - media-network
       - traefik-proxy
@@ -139,26 +134,23 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "2.0"
+          cpus: '2.0'
           memory: 2G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 1G
       labels:
-        # Habilitar Traefik
-        - "traefik.enable=true"
-
-        # Configuração do Router
-        - "traefik.http.routers.photoprism.rule=Host(`photoprism.henriqzimer.com.br`)"
-        - "traefik.http.routers.photoprism.entrypoints=websecure"
-        - "traefik.http.routers.photoprism.tls=true"
-        - "traefik.http.routers.photoprism.tls.certresolver=cloudflare"
-
-        # Middlewares
-        - "traefik.http.routers.photoprism.middlewares=web-chain@file"
-
-        # Configuração do Serviço
-        - "traefik.http.services.photoprism.loadbalancer.server.port=2342"
+        - traefik.enable=true
+        - traefik.http.routers.photoprism.rule=Host(`photoprism.henriqzimer.com.br`)
+        - traefik.http.routers.photoprism.entrypoints=websecure
+        - traefik.http.routers.photoprism.tls=true
+        - traefik.http.routers.photoprism.tls.certresolver=cloudflare
+        - traefik.http.routers.photoprism.middlewares=web-chain@file
+        - traefik.http.services.photoprism.loadbalancer.server.port=2342
+    secrets:
+      - url
+      - db_password
+      - admin_password
 
 volumes:
   db_data:
@@ -166,31 +158,31 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/photoprism/db"
+      device: ':/mnt/slowbro/docker/photoprism/db'
   app_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/photoprism/app"
+      device: ':/mnt/slowbro/docker/photoprism/app'
   originals_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/photoprism/originals"
+      device: ':/mnt/slowbro/docker/photoprism/originals'
   import_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ":/mnt/slowbro/docker/photoprism/import"
+      device: ':/mnt/slowbro/docker/photoprism/import'
 
 networks:
   media-network:
     driver: overlay
     driver_opts:
-      encrypted: "true"
+      encrypted: 'true'
     attachable: true
   traefik-proxy:
     external: true
