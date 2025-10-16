@@ -1,0 +1,154 @@
+services:
+  app:
+    image: prom/prometheus:latest
+    volumes:
+      - app_data:/prometheus
+      - prometheus_config:/etc/prometheus
+    environment:
+      TZ: America/Sao_Paulo
+    networks:
+      - monitoring-network
+      - traefik-proxy
+      - cloudflared-proxy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.external-url=https://prometheus.henriqzimer.com.br'
+      - '--web.route-prefix=/'
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.prometheus.rule=Host(`prometheus.henriqzimer.com.br`)
+        - traefik.http.routers.prometheus.entrypoints=websecure
+        - traefik.http.routers.prometheus.tls=true
+        - traefik.http.routers.prometheus.tls.certresolver=cloudflare
+        - traefik.http.routers.prometheus.middlewares=web-chain@file
+        - traefik.http.services.prometheus.loadbalancer.server.port=9090
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    environment:
+      TZ: America/Sao_Paulo
+    networks:
+      - monitoring-network
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    environment:
+      TZ: America/Sao_Paulo
+    networks:
+      - monitoring-network
+    command:
+      - '--docker_only=true'
+      - '--housekeeping_interval=30s'
+      - '--max_housekeeping_interval=60s'
+      - '--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,cpu_topology,resctrl'
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+volumes:
+  app_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ':/mnt/altaria/docker/prometheus/data'
+  prometheus_config:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
+      device: ':/mnt/altaria/docker/prometheus/config'
+
+networks:
+  monitoring-network:
+    driver: overlay
+    driver_opts:
+      encrypted: 'true'
+    attachable: true
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
+    external: true
+    name: cloudflared_proxy-network

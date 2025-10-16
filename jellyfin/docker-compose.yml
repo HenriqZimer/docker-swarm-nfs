@@ -42,11 +42,11 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '3.0'
-          memory: 2G
+          cpus: "4.0"
+          memory: 3G
         reservations:
-          cpus: '1.0'
-          memory: 1G
+          cpus: "2.0"
+          memory: 2G
       labels:
         - traefik.enable=true
         - traefik.http.routers.jellyfin.rule=Host(`jellyfin.henriqzimer.com.br`)
@@ -62,25 +62,25 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/jellyfin/config'
+      device: ":/mnt/altaria/docker/jellyfin/config"
   media_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/slowbro/downloads'
+      device: ":/mnt/slowbro/downloads"
   cache_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/jellyfin/cache'
+      device: ":/mnt/altaria/docker/jellyfin/cache"
 
 networks:
   media-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   traefik-proxy:
     external: true
