@@ -33,3 +33,4 @@ Thumbs.db
 
 *.txt
 dynamic.yml
+vault.hcl

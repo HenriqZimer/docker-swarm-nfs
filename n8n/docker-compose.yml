@@ -15,10 +15,10 @@ services:
       test:
         - CMD-SHELL
         - pg_isready -U n8n -d n8n
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
     command: |
       postgres -c listen_addresses=* -c shared_buffers=256MB -c effective_cache_size=512MB -c max_connections=100 -c wal_buffers=16MB -c checkpoint_completion_target=0.9 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c log_statement=all -c log_duration=on -c log_min_duration_statement=1000
     deploy:
@@ -34,18 +34,18 @@ services:
         window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
     secrets:
       - db_password
@@ -116,7 +116,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 90s
     deploy:
       replicas: 1
       placement:
@@ -129,18 +129,18 @@ services:
         window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '4.0'
+          cpus: "4.0"
           memory: 4G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 2G
       labels:
         - traefik.enable=true
@@ -167,19 +167,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/n8n/db'
+      device: ":/mnt/altaria/docker/n8n/db"
   app_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/n8n/app'
+      device: ":/mnt/altaria/docker/n8n/app"
 
 networks:
   automation-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   traefik-proxy:
     external: true

@@ -9,7 +9,7 @@ services:
       test:
         - CMD
         - cloudflared
-        - '--help'
+        - "--help"
       interval: 30s
       timeout: 10s
       retries: 3
@@ -24,7 +24,7 @@ services:
       restart_policy:
         condition: on-failure
         delay: 10s
-        max_attempts: 3
+        max_attempts: 5
         window: 120s
       update_config:
         parallelism: 1
@@ -36,10 +36,10 @@ services:
         delay: 10s
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
     secrets:
       - tunnel_swarm_token
@@ -54,7 +54,7 @@ services:
       test:
         - CMD
         - cloudflared
-        - '--help'
+        - "--help"
       interval: 30s
       timeout: 10s
       retries: 3
@@ -81,10 +81,10 @@ services:
         delay: 10s
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 128M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
     secrets:
       - tunnel_service_token
@@ -93,7 +93,7 @@ networks:
   proxy-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
 
 secrets:

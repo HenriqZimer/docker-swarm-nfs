@@ -1,4 +1,55 @@
 services:
+  db:
+    image: mariadb:latest
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+      - MARIADB_DATABASE=romm
+      - MARIADB_USER=romm-user
+      - MARIADB_PASSWORD_FILE=/run/secrets/db_password
+    networks:
+      - retro-network
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - "--connect"
+        - "--innodb_initialized"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.25"
+          memory: 512M
+    secrets:
+      - db_password
+      - db_root_password
+
   app:
     image: rommapp/romm:latest
     volumes:
@@ -8,6 +59,8 @@ services:
       - assets_data:/romm/assets
       - config_data:/romm/config
     environment:
+      - TZ=America/Sao_Paulo
+      - ROMM_BASE_URL_FILE=/run/secrets/base_url
       - DB_HOST=db
       - DB_NAME=romm
       - DB_USER=romm-user
@@ -26,10 +79,10 @@ services:
       test:
         - CMD-SHELL
         - curl -f http://localhost:8080/ || exit 1
-      interval: 60s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
     deploy:
       mode: replicated
       replicas: 1
@@ -38,23 +91,23 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
-        delay: 30s
+        delay: 10s
         max_attempts: 5
-        window: 300s
+        window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 4G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
       labels:
         - traefik.enable=true
@@ -65,6 +118,7 @@ services:
         - traefik.http.routers.romm.middlewares=web-chain@file
         - traefik.http.services.romm.loadbalancer.server.port=8080
     secrets:
+      - base_url
       - db_password
       - auth_secret_key
       - igdb_client_id
@@ -72,100 +126,49 @@ services:
       - steamgriddb_api_key
       - retroachievements_api_key
 
-  db:
-    image: mariadb:latest
-    volumes:
-      - db_data:/var/lib/mysql
-    environment:
-      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
-      - MARIADB_DATABASE=romm
-      - MARIADB_USER=romm-user
-      - MARIADB_PASSWORD_FILE=/run/secrets/db_password
-    networks:
-      - retro-network
-    healthcheck:
-      test:
-        - CMD
-        - healthcheck.sh
-        - '--connect'
-        - '--innodb_initialized'
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    deploy:
-      mode: replicated
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: on-failure
-        delay: 30s
-        max_attempts: 5
-        window: 300s
-      update_config:
-        parallelism: 1
-        delay: 30s
-        failure_action: rollback
-        order: stop-first
-      rollback_config:
-        parallelism: 1
-        delay: 30s
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 512M
-    secrets:
-      - db_password
-      - db_root_password
-
 volumes:
   db_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/romm/db'
+      device: ":/mnt/altaria/docker/romm/db"
   redis_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/romm/redis'
+      device: ":/mnt/altaria/docker/romm/redis"
   resources_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/romm/resources'
+      device: ":/mnt/altaria/docker/romm/resources"
   library_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/slowbro/library'
+      device: ":/mnt/slowbro/library"
   assets_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/romm/assets'
+      device: ":/mnt/altaria/docker/romm/assets"
   config_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/romm/config'
+      device: ":/mnt/altaria/docker/romm/config"
 
 networks:
   retro-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   traefik-proxy:
     external: true
@@ -175,6 +178,8 @@ networks:
     name: cloudflared_proxy-network
 
 secrets:
+  base_url:
+    file: ./romm_base_url.txt
   db_password:
     file: ./romm_db_password.txt
   db_root_password:

@@ -4,8 +4,8 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     environment:
-      MARIADB_AUTO_UPGRADE: '1'
-      MARIADB_INITDB_SKIP_TZINFO: '1'
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_INITDB_SKIP_TZINFO: "1"
       MARIADB_DATABASE: photoprism
       MARIADB_USER: photoprism
       MARIADB_PASSWORD_FILE: /run/secrets/db_password
@@ -18,9 +18,9 @@ services:
         - mariadb-admin ping -h localhost -u root --password="$$(cat /run/secrets/db_password)" --silent
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
-    command: '--innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120'
+      retries: 3
+      start_period: 90s
+    command: "--innodb-buffer-pool-size=512M --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=120"
     deploy:
       mode: replicated
       replicas: 1
@@ -29,23 +29,23 @@ services:
           - node.role == manager
       restart_policy:
         condition: on-failure
-        delay: 30s
+        delay: 10s
         max_attempts: 5
-        window: 300s
+        window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 1G
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 512M
     secrets:
       - db_password
@@ -60,38 +60,38 @@ services:
       PHOTOPRISM_ADMIN_USER: admin
       PHOTOPRISM_ADMIN_PASSWORD_FILE: /run/secrets/admin_password
       PHOTOPRISM_AUTH_MODE: password
-      PHOTOPRISM_DISABLE_TLS: 'false'
-      PHOTOPRISM_DEFAULT_TLS: 'true'
+      PHOTOPRISM_DISABLE_TLS: "false"
+      PHOTOPRISM_DEFAULT_TLS: "true"
       PHOTOPRISM_DEFAULT_LOCALE: pt
       PHOTOPRISM_PLACES_LOCALE: local
       PHOTOPRISM_SITE_URL_FILE: /run/secrets/url
       PHOTOPRISM_SITE_TITLE: PhotoPrism
       PHOTOPRISM_SITE_CAPTION: PhotoPrism
-      PHOTOPRISM_SITE_DESCRIPTION: ''
-      PHOTOPRISM_SITE_AUTHOR: ''
+      PHOTOPRISM_SITE_DESCRIPTION: ""
+      PHOTOPRISM_SITE_AUTHOR: ""
       PHOTOPRISM_LOG_LEVEL: info
-      PHOTOPRISM_READONLY: 'false'
-      PHOTOPRISM_EXPERIMENTAL: 'false'
-      PHOTOPRISM_DISABLE_CHOWN: 'false'
-      PHOTOPRISM_DISABLE_WEBDAV: 'false'
-      PHOTOPRISM_DISABLE_SETTINGS: 'false'
-      PHOTOPRISM_DISABLE_TENSORFLOW: 'false'
-      PHOTOPRISM_DISABLE_FACES: 'false'
-      PHOTOPRISM_DISABLE_CLASSIFICATION: 'false'
-      PHOTOPRISM_DISABLE_VECTORS: 'false'
-      PHOTOPRISM_DISABLE_RAW: 'false'
-      PHOTOPRISM_RAW_PRESETS: 'false'
-      PHOTOPRISM_SIDECAR_YAML: 'true'
-      PHOTOPRISM_BACKUP_ALBUMS: 'true'
-      PHOTOPRISM_BACKUP_DATABASE: 'true'
+      PHOTOPRISM_READONLY: "false"
+      PHOTOPRISM_EXPERIMENTAL: "false"
+      PHOTOPRISM_DISABLE_CHOWN: "false"
+      PHOTOPRISM_DISABLE_WEBDAV: "false"
+      PHOTOPRISM_DISABLE_SETTINGS: "false"
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false"
+      PHOTOPRISM_DISABLE_FACES: "false"
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
+      PHOTOPRISM_DISABLE_VECTORS: "false"
+      PHOTOPRISM_DISABLE_RAW: "false"
+      PHOTOPRISM_RAW_PRESETS: "false"
+      PHOTOPRISM_SIDECAR_YAML: "true"
+      PHOTOPRISM_BACKUP_ALBUMS: "true"
+      PHOTOPRISM_BACKUP_DATABASE: "true"
       PHOTOPRISM_BACKUP_SCHEDULE: daily
-      PHOTOPRISM_INDEX_SCHEDULE: ''
+      PHOTOPRISM_INDEX_SCHEDULE: ""
       PHOTOPRISM_AUTO_INDEX: 300
       PHOTOPRISM_AUTO_IMPORT: -1
-      PHOTOPRISM_DETECT_NSFW: 'false'
-      PHOTOPRISM_UPLOAD_NSFW: 'true'
-      PHOTOPRISM_UPLOAD_ALLOW: ''
-      PHOTOPRISM_UPLOAD_ARCHIVES: 'true'
+      PHOTOPRISM_DETECT_NSFW: "false"
+      PHOTOPRISM_UPLOAD_NSFW: "true"
+      PHOTOPRISM_UPLOAD_ALLOW: ""
+      PHOTOPRISM_UPLOAD_ARCHIVES: "true"
       PHOTOPRISM_UPLOAD_LIMIT: 5000
       PHOTOPRISM_ORIGINALS_LIMIT: 5000
       PHOTOPRISM_HTTP_COMPRESSION: gzip
@@ -111,8 +111,8 @@ services:
         - curl -f http://localhost:2342/api/v1/status || exit 1
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 3
+      start_period: 90s
     deploy:
       mode: replicated
       replicas: 1
@@ -121,23 +121,23 @@ services:
           - node.role == worker
       restart_policy:
         condition: on-failure
-        delay: 30s
+        delay: 10s
         max_attempts: 5
-        window: 600s
+        window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 1G
       labels:
         - traefik.enable=true
@@ -158,31 +158,31 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/photoprism/db'
+      device: ":/mnt/slowbro/docker/photoprism/db"
   app_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/photoprism/app'
+      device: ":/mnt/slowbro/docker/photoprism/app"
   originals_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/photoprism/originals'
+      device: ":/mnt/slowbro/docker/photoprism/originals"
   import_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=truenas-scale,nfsvers=4,rw
-      device: ':/mnt/slowbro/docker/photoprism/import'
+      device: ":/mnt/slowbro/docker/photoprism/import"
 
 networks:
   media-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   traefik-proxy:
     external: true

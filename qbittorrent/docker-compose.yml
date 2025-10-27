@@ -11,7 +11,6 @@ services:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
     networks:
-      - download-network
       - traefik-proxy
       - cloudflared-proxy
     healthcheck:
@@ -21,7 +20,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 90s
     deploy:
       replicas: 1
       placement:
@@ -34,18 +33,18 @@ services:
         window: 120s
       update_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
         failure_action: rollback
         order: stop-first
       rollback_config:
         parallelism: 1
-        delay: 30s
+        delay: 10s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 512M
       labels:
         - traefik.enable=true
@@ -62,20 +61,15 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/qbittorrent/config'
+      device: ":/mnt/altaria/docker/qbittorrent/config"
   downloads_data:
     driver: local
     driver_opts:
       type: nfs
       o: addr=slowbro.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/slowbro/downloads'
+      device: ":/mnt/slowbro/downloads"
 
 networks:
-  download-network:
-    driver: overlay
-    driver_opts:
-      encrypted: 'true'
-    attachable: true
   traefik-proxy:
     external: true
     name: traefik_proxy-network

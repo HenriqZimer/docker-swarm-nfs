@@ -17,18 +17,18 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=30d'
-      - '--storage.tsdb.retention.size=10GB'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-      - '--web.external-url=https://prometheus.henriqzimer.com.br'
-      - '--web.route-prefix=/'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--storage.tsdb.retention.size=10GB"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+      - "--web.external-url=https://prometheus.henriqzimer.com.br"
+      - "--web.route-prefix=/"
     deploy:
       mode: replicated
       replicas: 1
@@ -50,10 +50,10 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
       labels:
         - traefik.enable=true
@@ -75,10 +75,10 @@ services:
     networks:
       - monitoring-network
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     deploy:
       mode: global
       restart_policy:
@@ -88,10 +88,10 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
 
   cadvisor:
@@ -107,10 +107,10 @@ services:
     networks:
       - monitoring-network
     command:
-      - '--docker_only=true'
-      - '--housekeeping_interval=30s'
-      - '--max_housekeeping_interval=60s'
-      - '--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,cpu_topology,resctrl'
+      - "--docker_only=true"
+      - "--housekeeping_interval=30s"
+      - "--max_housekeeping_interval=60s"
+      - "--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,cpu_topology,resctrl"
     deploy:
       mode: global
       restart_policy:
@@ -120,10 +120,10 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 128M
 
 volumes:
@@ -132,19 +132,19 @@ volumes:
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/prometheus/data'
+      device: ":/mnt/altaria/docker/prometheus/data"
   prometheus_config:
     driver: local
     driver_opts:
       type: nfs
       o: addr=altaria.henriqzimer.com.br,nfsvers=4,rw
-      device: ':/mnt/altaria/docker/prometheus/config'
+      device: ":/mnt/altaria/docker/prometheus/config"
 
 networks:
   monitoring-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
   traefik-proxy:
     external: true
