@@ -17,7 +17,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 60s
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
@@ -45,6 +45,7 @@ services:
         delay: 30s
         failure_action: rollback
         order: stop-first
+        monitor: 30s
       rollback_config:
         parallelism: 1
         delay: 30s

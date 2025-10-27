@@ -37,6 +37,7 @@ services:
         delay: 10s
         failure_action: rollback
         order: stop-first
+        monitor: 10s
       rollback_config:
         parallelism: 1
         delay: 10s
@@ -132,6 +133,7 @@ services:
         delay: 10s
         failure_action: rollback
         order: stop-first
+        monitor: 10s
       rollback_config:
         parallelism: 1
         delay: 10s

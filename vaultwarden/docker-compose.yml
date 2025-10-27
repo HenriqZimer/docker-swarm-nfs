@@ -18,7 +18,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 60s
     command: |
       postgres -c max_connections=100 -c shared_buffers=128MB -c effective_cache_size=256MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c listen_addresses=*
     deploy:
@@ -37,6 +37,7 @@ services:
         delay: 10s
         failure_action: rollback
         order: stop-first
+        monitor: 10s
       rollback_config:
         parallelism: 1
         delay: 10s
@@ -127,7 +128,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 60s
     deploy:
       mode: replicated
       replicas: 1
@@ -144,7 +145,7 @@ services:
       restart_policy:
         condition: on-failure
         delay: 10s
-        max_attempts: 5
+        max_attempts: 3
         window: 120s
       update_config:
         parallelism: 1
