@@ -58,7 +58,6 @@ services:
     environment:
       - N8N_RUNNERS_ENABLED=true
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      - N8N_ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
       - N8N_HOST_FILE=/run/secrets/host
       - N8N_BASIC_AUTH_ACTIVE=false
       - N8N_USER_MANAGEMENT_DISABLED=false

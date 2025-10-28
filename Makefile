@@ -4,7 +4,7 @@
 .PHONY: help deploy stop restart status logs clean check-secrets backup restore
 
 # Variáveis
-SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared jellyfin qbittorrent
+SERVICES = grafana zabbix n8n vaultwarden portainer cloudflared jellyfin qbittorrent photoprism romm traefik vault prometheus
 COMPOSE_FILES = $(foreach service,$(SERVICES),$(service)/docker-compose.yml)
 
 # 📋 Help - Lista todos os comandos disponíveis
@@ -52,6 +52,10 @@ deploy: check-swarm
 	fi
 
 # 📦 Deploy de serviços individuais
+deploy-cloudflared: check-swarm
+	@echo "☁️ Deployando Cloudflared..."
+	cd cloudflared && docker stack deploy -c docker-compose.yml cloudflared
+
 deploy-grafana: check-swarm
 	@echo "📊 Deployando Grafana..."
 	cd grafana && docker stack deploy -c docker-compose.yml grafana
@@ -81,8 +85,28 @@ deploy-jellyfin: check-swarm
 	cd jellyfin && docker stack deploy -c docker-compose.yml jellyfin
 
 deploy-qbittorrent: check-swarm
-	@echo "� Deployando qBittorrent..."
+	@echo "📥 Deployando qBittorrent..."
 	cd qbittorrent && docker stack deploy -c docker-compose.yml qbittorrent
+
+deploy-photoprism: check-swarm
+	@echo "🖼️ Deployando PhotoPrism..."
+	cd photoprism && docker stack deploy -c docker-compose.yml photoprism
+
+deploy-romm: check-swarm
+	@echo "🖼️ Deployando Romm..."
+	cd romm && docker stack deploy -c docker-compose.yml romm
+
+deploy-traefik: check-swarm
+	@echo "☁️ Deployando Traefik..."
+	cd traefik && docker stack deploy -c docker-compose.yml traefik
+
+deploy-vault: check-swarm
+	@echo "☁️ Deployando Vault..."
+	cd vault && docker stack deploy -c docker-compose.yml vault
+
+deploy-prometheus: check-swarm
+	@echo "☁️ Deployando Prometheus..."
+	cd prometheus && docker stack deploy -c docker-compose.yml prometheus
 
 # 🛑 Stop de todos os serviços
 stop:

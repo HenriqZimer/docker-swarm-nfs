@@ -1,0 +1,62 @@
+services:
+  app:
+    image: henriquezimermann/meu-site:latest
+    networks:
+      - site-network
+      - traefik-proxy
+      - cloudflared-proxy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -f http://localhost:3000/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == worker
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.meu-site.rule=Host(`meu-site.henriqzimer.com.br`)
+        - traefik.http.routers.meu-site.entrypoints=websecure
+        - traefik.http.routers.meu-site.tls=true
+        - traefik.http.routers.meu-site.tls.certresolver=cloudflare
+        - traefik.http.routers.meu-site.middlewares=web-chain@file
+        - traefik.http.services.meu-site.loadbalancer.server.port=3000
+
+networks:
+  site-network:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    attachable: true
+  traefik-proxy:
+    external: true
+    name: traefik_proxy-network
+  cloudflared-proxy:
+    external: true
+    name: cloudflared_proxy-network
