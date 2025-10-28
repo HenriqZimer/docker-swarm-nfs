@@ -123,10 +123,6 @@ networks:
     driver_opts:
       encrypted: "true"
     attachable: true
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.22.0.0/16
 
 configs:
   dynamic_config:
