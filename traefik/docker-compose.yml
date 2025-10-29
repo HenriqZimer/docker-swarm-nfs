@@ -16,6 +16,7 @@ services:
         mode: ingress
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/acme
     environment:
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_api_key
       - TZ=America/Sao_Paulo
@@ -57,7 +58,7 @@ services:
       - '--providers.file.filename=/etc/traefik/dynamic.yml'
       - '--providers.file.watch=true'
       - '--certificatesresolvers.cloudflare.acme.email=henrique@henriqzimer.com.br'
-      - '--certificatesresolvers.cloudflare.acme.storage=/tmp/acme.json'
+      - '--certificatesresolvers.cloudflare.acme.storage=/acme/acme.json'
       - '--certificatesresolvers.cloudflare.acme.dnschallenge=true'
       - '--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare'
       - '--certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=60s'
@@ -133,3 +134,6 @@ secrets:
     file: ./cloudflare_api_key.txt
   traefik_dashboard_auth:
     file: ./traefik_dashboard_auth.txt
+
+volumes:
+  acme:
