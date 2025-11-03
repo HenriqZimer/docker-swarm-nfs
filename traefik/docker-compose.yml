@@ -16,7 +16,7 @@ services:
         mode: ingress
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - acme:/acme
+      - acme_data:/acme
     environment:
       - CF_DNS_API_TOKEN_FILE=/run/secrets/cloudflare_api_key
       - TZ=America/Sao_Paulo
@@ -27,52 +27,52 @@ services:
         - CMD
         - traefik
         - healthcheck
-        - '--ping'
+        - "--ping"
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     command:
-      - '--global.checkNewVersion=false'
-      - '--global.sendAnonymousUsage=false'
-      - '--api=true'
-      - '--api.dashboard=true'
-      - '--api.insecure=false'
-      - '--ping=true'
-      - '--ping.entryPoint=traefik'
-      - '--entrypoints.web.address=:80'
-      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
-      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
-      - '--entrypoints.web.http.redirections.entrypoint.permanent=true'
-      - '--entrypoints.websecure.address=:443'
-      - '--entrypoints.websecure.http.tls=true'
-      - '--entrypoints.websecure.http.tls.certResolver=cloudflare'
-      - '--entrypoints.websecure.http3.advertisedPort=443'
-      - '--entrypoints.traefik.address=:8080'
-      - '--providers.swarm=true'
-      - '--providers.swarm.exposedByDefault=false'
-      - '--providers.swarm.network=traefik_proxy-network'
-      - '--providers.swarm.watch=true'
-      - '--providers.swarm.endpoint=unix:///var/run/docker.sock'
-      - '--providers.swarm.refreshSeconds=15'
-      - '--providers.file.filename=/etc/traefik/dynamic.yml'
-      - '--providers.file.watch=true'
-      - '--certificatesresolvers.cloudflare.acme.email=henrique@henriqzimer.com.br'
-      - '--certificatesresolvers.cloudflare.acme.storage=/acme/acme.json'
-      - '--certificatesresolvers.cloudflare.acme.dnschallenge=true'
-      - '--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare'
-      - '--certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=60s'
-      - '--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53'
-      - '--certificatesresolvers.cloudflare.acme.dnschallenge.disablepropagationcheck=true'
-      - '--log.level=INFO'
-      - '--log.format=json'
-      - '--accesslog=true'
-      - '--accesslog.format=json'
-      - '--accesslog.bufferingsize=100'
-      - '--metrics.prometheus=true'
-      - '--metrics.prometheus.addEntryPointsLabels=true'
-      - '--metrics.prometheus.addServicesLabels=true'
-      - '--metrics.prometheus.addRoutersLabels=true'
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      - "--api=true"
+      - "--api.dashboard=true"
+      - "--api.insecure=false"
+      - "--ping=true"
+      - "--ping.entryPoint=traefik"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certResolver=cloudflare"
+      - "--entrypoints.websecure.http3.advertisedPort=443"
+      - "--entrypoints.traefik.address=:8080"
+      - "--providers.swarm=true"
+      - "--providers.swarm.exposedByDefault=false"
+      - "--providers.swarm.network=traefik_proxy-network"
+      - "--providers.swarm.watch=true"
+      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
+      - "--providers.swarm.refreshSeconds=15"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--certificatesresolvers.cloudflare.acme.email=henrique@henriqzimer.com.br"
+      - "--certificatesresolvers.cloudflare.acme.storage=/acme/acme.json"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.propagation.delayBeforeChecks=60s"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.propagation.disableChecks=true"
+      - "--log.level=INFO"
+      - "--log.format=json"
+      - "--accesslog=true"
+      - "--accesslog.format=json"
+      - "--accesslog.bufferingsize=100"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.addEntryPointsLabels=true"
+      - "--metrics.prometheus.addServicesLabels=true"
+      - "--metrics.prometheus.addRoutersLabels=true"
     configs:
       - source: dynamic_config
         target: /etc/traefik/dynamic.yml
@@ -100,10 +100,10 @@ services:
         monitor: 10s
       resources:
         limits:
-          cpus: '2.0'
+          cpus: "2.0"
           memory: 1G
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
       labels:
         - traefik.enable=true
@@ -116,24 +116,25 @@ services:
         - traefik.http.services.traefik.loadbalancer.server.port=8080
     secrets:
       - cloudflare_api_key
-      - traefik_dashboard_auth
+      - dashboard_auth
 
 networks:
   proxy-network:
     driver: overlay
     driver_opts:
-      encrypted: 'true'
+      encrypted: "true"
     attachable: true
 
 configs:
   dynamic_config:
     file: ./dynamic.yml
 
+volumes:
+  acme_data:
+    driver: local
+
 secrets:
   cloudflare_api_key:
     file: ./cloudflare_api_key.txt
-  traefik_dashboard_auth:
+  dashboard_auth:
     file: ./traefik_dashboard_auth.txt
-
-volumes:
-  acme:

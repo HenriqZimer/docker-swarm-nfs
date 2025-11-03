@@ -57,7 +57,7 @@ http:
     # Autenticação básica para serviços administrativos
     admin-auth:
       basicAuth:
-        usersFile: "/run/secrets/traefik_dashboard_auth"
+        usersFile: "/run/secrets/dashboard_auth"
 
     # IP Whitelist para serviços internos (opcional)
     internal-whitelist:
