@@ -7,8 +7,11 @@ services:
       - cloudflared-proxy
     healthcheck:
       test:
-        - CMD-SHELL
-        - curl -f http://localhost:3000/health || exit 1
+        - CMD
+        - wget
+        - '--spider'
+        - '-q'
+        - http://0.0.0.0:3000/
       interval: 30s
       timeout: 10s
       retries: 3
@@ -34,14 +37,14 @@ services:
         delay: 30s
       resources:
         limits:
-          cpus: "1.0"
+          cpus: '1.0'
           memory: 1G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
       labels:
         - traefik.enable=true
-        - traefik.http.routers.meu-site.rule=Host(`meu-site.henriqzimer.com.br`)
+        - traefik.http.routers.meu-site.rule=Host(`henriqzimer.com.br`)
         - traefik.http.routers.meu-site.entrypoints=websecure
         - traefik.http.routers.meu-site.tls=true
         - traefik.http.routers.meu-site.tls.certresolver=cloudflare
@@ -52,7 +55,7 @@ networks:
   site-network:
     driver: overlay
     driver_opts:
-      encrypted: "true"
+      encrypted: 'true'
     attachable: true
   traefik-proxy:
     external: true
